@@ -66,3 +66,10 @@ La première compilation signalait les types CSS manquants ; ajout de
 « Serveur Matrix accessible », bouton de vérification essayé, capture visuelle
 en vue étroite. Le scénario serveur arrêté n'a pas été exécuté.
 Le port de développement est 127.0.0.1:5173 et le proxy cible 127.0.0.1:8008.
+
+## Étape 6 — référence UI/UX
+
+Lecture de la référence HTML fournie, y compris ses écrans intégrés. Les choix
+et adaptations sont consignés dans `docs/reference-interface.md`. Aucun code
+de la référence exécuté ou intégré au client. Vérification : diff documentaire.
+Pas de changement du comportement applicatif ni de validation de sécurité.
