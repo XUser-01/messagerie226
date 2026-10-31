@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+docker/runtime/
+node_modules/
+dist/
+coverage/
+*.log
+*.key
+*.pem
+.DS_Store
