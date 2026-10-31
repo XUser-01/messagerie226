@@ -31,3 +31,17 @@ réseau ; la désactivation de fédération est applicative, pas un blocage rés
 Validation statique : `docker compose config --quiet`. Validation réelle à faire
 dans la session utilisateur : `docker compose up -d`, `docker compose ps`, puis
 `Invoke-RestMethod http://localhost:8008/_matrix/client/versions`.
+
+## Étape 4 — droits du volume Synapse
+
+Journaux fournis : PermissionError sur `/data/messagerie226.local.signing.key`.
+Synapse ne termine pas son démarrage. L'image abandonne les droits root pour
+991:991 mais, en mode run, ne prépare pas la propriété du volume neuf.
+Ajout de `synapse_data_init` : même image, commande `chown 991:991 /data`, sans
+réseau, exécution ponctuelle en root. Aucun changement récursif ni suppression.
+Synapse attend sa réussite avant de démarrer. La clé est créée par Synapse et
+reste dans le volume ; elle signe l'identité serveur, ce n'est pas une clé E2EE.
+
+Source vérifiée : https://github.com/element-hq/synapse/blob/v1.164.1/docker/start.py
+Validation statique : Compose. Test réel restant dans la session utilisateur :
+`docker compose up -d --wait --wait-timeout 120`, puis API versions.

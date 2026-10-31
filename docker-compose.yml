@@ -1,5 +1,14 @@
 name: messagerie226
 services:
+  synapse_data_init:
+    image: ghcr.io/element-hq/synapse:v1.164.1
+    user: '0:0'
+    entrypoint: [chown]
+    command: ['991:991', /data]
+    network_mode: none
+    restart: 'no'
+    volumes:
+      - synapse_data:/data
   postgres:
     image: postgres:17-bookworm
     restart: unless-stopped
@@ -20,6 +29,8 @@ services:
     image: ghcr.io/element-hq/synapse:v1.164.1
     restart: unless-stopped
     depends_on:
+      synapse_data_init:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
     environment:
