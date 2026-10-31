@@ -46,7 +46,11 @@ Ne pas promettre une instantanéité absolue avant d'avoir mesuré ces courses.
 Pas de fédération entrante exposée, liste de fédération sortante vide,
 statistiques et présence désactivées. Cela ne masque ni l'identité des membres,
 ni la taille des événements, ni les horaires à l'administrateur du serveur.
-Le réseau Docker interne isole les services ; ce n'est pas un audit d'étanchéité.
+PostgreSQL reste sur le réseau interne `matrix`. Synapse y accède et possède
+également un réseau `client_access` pour publier son API sur 127.0.0.1:8008.
+Ce second réseau autorise aussi des connexions sortantes : aucune garantie
+d'isolement réseau complet de Synapse. La fédération reste désactivée par la
+configuration applicative. Ce n'est pas un audit d'étanchéité.
 
 ## Critères P0 avant P1
 

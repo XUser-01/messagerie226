@@ -35,8 +35,10 @@ services:
       timeout: 5s
       retries: 20
       start_period: 30s
-    networks: [matrix]
+    networks: [matrix, client_access]
 networks:
+  client_access:
+    driver: bridge
   matrix:
     internal: true
 volumes:
