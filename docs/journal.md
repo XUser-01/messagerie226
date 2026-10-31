@@ -73,3 +73,12 @@ Lecture de la référence HTML fournie, y compris ses écrans intégrés. Les ch
 et adaptations sont consignés dans `docs/reference-interface.md`. Aucun code
 de la référence exécuté ou intégré au client. Vérification : diff documentaire.
 Pas de changement du comportement applicatif ni de validation de sécurité.
+
+## Étape 7 — enrôlement
+
+Ajout de scripts d'enrôlement et de contrôle des comptes fictifs, selon l'API
+Synapse officielle. `node server/enroll-demo.mjs` exécuté deux fois : création,
+puis conservation des comptes existants. `git check-ignore` confirme l'exclusion
+des mots de passe. `node server/check-enrollment.mjs` : tous les contrôles passent
+sur le serveur local, dont refus admin, inscription publique et jeton invalidé.
+Mécanismes et limites dans `docs/authentication.md`.
