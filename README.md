@@ -21,7 +21,7 @@ Voir [les choix et limites](docs/architecture.md).
 | Synapse 1.164.1 | Serveur Matrix | [AGPL-3.0](https://github.com/element-hq/synapse/blob/develop/LICENSE-AGPL-3.0) |
 | PostgreSQL 17 | Base de données | [PostgreSQL License](https://www.postgresql.org/about/licence/) |
 | React (prévu) | Client personnalisé | [MIT](https://github.com/facebook/react/blob/main/LICENSE) |
-| matrix-js-sdk (prévu) | API Matrix et intégration crypto | [Apache-2.0](https://github.com/matrix-org/matrix-js-sdk/blob/develop/LICENSE) |
+| matrix-js-sdk 45.0.0 | API Matrix et intégration crypto | [Apache-2.0](https://github.com/matrix-org/matrix-js-sdk/blob/develop/LICENSE) |
 | Matrix Rust SDK (prévu) | Moteur E2EE | [Apache-2.0](https://github.com/matrix-org/matrix-rust-sdk/blob/main/LICENSE) |
 | Docker Engine / Compose | Conteneurs sur Linux | [Apache-2.0 Engine](https://github.com/moby/moby/blob/master/LICENSE), [Compose](https://github.com/docker/compose/blob/main/LICENSE) |
 
@@ -54,12 +54,16 @@ Ne pas utiliser `down -v` : cela détruirait les volumes.
 
 Depuis `client/` : `npm ci`, `npm run build`, puis `npm run dev`.
 Ouvrir http://127.0.0.1:5173 pour vérifier la connexion du navigateur à Synapse.
-Ce premier écran ne propose pas encore de login ni d'envoi de messages.
+Le formulaire permet la connexion des agents et initialise Rust Crypto.
+L'envoi de messages reste à intégrer et à vérifier.
 
 ## Comptes de démonstration
 
-Aucun compte créé. Inscription publique interdite. L'enrôlement administrateur
-de comptes entièrement fictifs sera ajouté après validation du serveur.
+`node server/enroll-demo.mjs` crée les comptes fictifs `agent.a` et `agent.b`,
+sans droits administrateur. Leurs mots de passe aléatoires restent dans
+`server/runtime/demo-accounts.json`, exclu de Git. Ne pas publier ce fichier.
+Inscription publique interdite. Voir [authentification et limites](docs/authentication.md).
+Tests serveur : `node server/check-enrollment.mjs`.
 
 ## Sécurité et limites
 

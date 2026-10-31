@@ -82,3 +82,12 @@ puis conservation des comptes existants. `git check-ignore` confirme l'exclusion
 des mots de passe. `node server/check-enrollment.mjs` : tous les contrôles passent
 sur le serveur local, dont refus admin, inscription publique et jeton invalidé.
 Mécanismes et limites dans `docs/authentication.md`.
+
+## Étape 8 — login et moteur cryptographique navigateur
+
+matrix-js-sdk 45.0.0 installé et verrouillé, audit npm sans vulnérabilité connue
+au moment de l'installation. `npm run build` passe. Le bundle Rust WASM ajoute
+environ 7,8 Mo non compressés : optimisation faible connexion non encore faite.
+Test navigateur : agent A connecté, Rust Crypto initialisé ; rechargement avec
+même identifiant d'appareil ; déconnexion ; compte inexistant refusé avec une
+erreur lisible. Aucun message chiffré échangé pendant cette étape.

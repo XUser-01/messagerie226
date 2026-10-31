@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { loginAgent, logoutAgent, restoreSession, type Connection } from './matrix';
 
 type ServerState =
   | { phase: 'checking' }
@@ -6,8 +7,42 @@ type ServerState =
   | { phase: 'failed' };
 
 export function App() {
+  const [connection, setConnection] = useState<Connection | null>(null);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(true);
+  const [authError, setAuthError] = useState('');
   const [server, setServer] = useState<ServerState>({ phase: 'checking' });
   const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    void restoreSession().then((result) => {
+      if (active) setConnection(result);
+      else if (result) { result.client.stopClient(); result.release(); }
+    }).catch(() => { if (active) setAuthError('Impossible de restaurer la session. Réessayez ou reconnectez-vous.'); })
+      .finally(() => { if (active) setBusy(false); });
+    return () => { active = false; };
+  }, []);
+
+  async function signIn(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setBusy(true); setAuthError('');
+    try { setConnection(await loginAgent(username, password)); }
+    catch (error) {
+      const code = (error as { errcode?: string }).errcode;
+      setAuthError(code === 'M_FORBIDDEN' ? 'Identifiant ou mot de passe incorrect.'
+        : code === 'M_LIMIT_EXCEEDED' ? 'Trop de tentatives. Patientez avant de réessayer.'
+        : 'Connexion impossible. Vérifiez le serveur et fermez les autres onglets de cette session.');
+    } finally { setPassword(''); setBusy(false); }
+  }
+
+  async function signOut() {
+    if (!connection) return;
+    setBusy(true); setAuthError('');
+    try { await logoutAgent(connection); setConnection(null); }
+    catch { setAuthError('Déconnexion non confirmée par le serveur. Réessayez.'); }
+    finally { setBusy(false); }
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -51,16 +86,28 @@ export function App() {
         </section>
         <section className="card" aria-labelledby="connection-title">
           <p className="eyebrow">CONNEXION AU SERVICE</p>
-          <h2 id="connection-title">Bienvenue sur Messagerie226</h2>
-          <p>Première étape : vérifier que votre serveur est accessible.</p>
+          <h2 id="connection-title">{connection ? 'Votre espace agent' : 'Messagerie souveraine'}</h2>
+          <p>{connection ? 'Votre identité est authentifiée par le serveur local.' : 'Connectez-vous avec votre compte agent préalablement enrôlé.'}</p>
           <div className={`status ${server.phase}`} role="status" aria-live="polite">
             <span className="dot" aria-hidden="true" />
             <div><strong>{server.phase === 'ready' ? 'Serveur Matrix accessible' : server.phase === 'checking' ? 'Vérification en cours…' : 'Serveur inaccessible'}</strong>
               <p>{server.phase === 'ready' ? 'La liaison avec Synapse fonctionne.' : server.phase === 'checking' ? 'Connexion à votre serveur local.' : 'Vérifiez que Docker et Synapse sont démarrés, puis réessayez.'}</p>
             </div>
           </div>
-          <button disabled={server.phase === 'checking'} onClick={() => setAttempt((value) => value + 1)}>Vérifier à nouveau</button>
-          <div className="notice"><strong>Prochaine étape : connexion des agents</strong><p>L’authentification et le chiffrement des messages sont en préparation. Cet écran vérifie seulement la disponibilité du serveur.</p></div>
+          {server.phase === 'failed' && <button type="button" onClick={() => setAttempt((value) => value + 1)}>Vérifier à nouveau</button>}
+          {authError && <p className="error" role="alert">{authError}</p>}
+          {connection ? <>
+            <dl className="identity"><dt>Identité Matrix</dt><dd>{connection.userId}</dd><dt>Appareil</dt><dd>{connection.deviceId}</dd></dl>
+            <div className="status ready"><span className="dot" /><div><strong>Moteur de chiffrement initialisé</strong><p>Rust Crypto est chargé. Les échanges de messages restent à tester.</p></div></div>
+            <button disabled={busy} onClick={() => void signOut()}>{busy ? 'Déconnexion…' : 'Se déconnecter'}</button>
+          </> : <form onSubmit={(event) => void signIn(event)}>
+            <label htmlFor="agent">Identifiant agent</label>
+            <input id="agent" autoComplete="username" placeholder="Ex. agent.a" required value={username} onChange={(event) => setUsername(event.target.value)} disabled={busy} />
+            <label htmlFor="password">Mot de passe</label>
+            <input id="password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} disabled={busy} />
+            <button disabled={busy || server.phase !== 'ready'}>{busy ? 'Préparation de la session…' : 'Se connecter'}</button>
+          </form>}
+          <div className="notice"><strong>Démonstration · données fictives</strong><p>Connexion par mot de passe. Double authentification et récupération des clés non encore configurées.</p></div>
         </section>
       </main>
       <footer>Messagerie226 <span>Prototype pré-Hackathon · Burkina Faso</span></footer>

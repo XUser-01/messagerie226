@@ -17,5 +17,10 @@ Ouvrir http://127.0.0.1:5173. Synapse démarré : état « Serveur Matrix access
 Serveur arrêté : état d'erreur sous huit secondes. Le bouton relance le test.
 Le client vérifie le statut HTTP et la structure de la réponse.
 
-Authentification, matrix-js-sdk et Rust Crypto seront intégrés ensuite.
-Ne pas ajouter d'envoi de messages tant que le moteur E2EE n'est pas initialisé.
+Le formulaire utilise matrix-js-sdk 45.0.0. `src/matrix.ts` initialise Rust Crypto
+avec IndexedDB avant de synchroniser. Les comptes fictifs sont enrôlés depuis
+le script serveur ; aucun secret d'enrôlement dans ce client. Le jeton est
+conservé dans sessionStorage, le mot de passe n'est pas persisté. La reprise
+après rechargement conserve l'identifiant d'appareil et le magasin de clés.
+Déconnexion : invalidation du jeton côté serveur puis retrait local.
+Voir `../docs/authentication.md`. Aucun envoi de messages à ce stade.

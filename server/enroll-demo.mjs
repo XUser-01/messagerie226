@@ -32,13 +32,17 @@ for (const account of accounts) {
   // HMAC prouve la connaissance du secret d'enrôlement, pas le chiffrement des messages.
   const mac = createHmac('sha1', configuration.registration_shared_secret)
     .update([nonce, account.username, account.password, 'notadmin'].join('\0')).digest('hex');
-  await request('/_synapse/admin/v1/register', {
+  const registration = await request('/_synapse/admin/v1/register', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ nonce, username: account.username, password: account.password,
       displayname: account.displayname, admin: false, inhibit_login: true, mac }),
   });
   account.enrolled = true;
   writeFileSync(credentialsPath, JSON.stringify(accounts, null, 2), { mode: 0o600 });
+  // Certaines versions peuvent renvoyer une session : ne pas la laisser active.
+  if (registration.access_token) await request('/_matrix/client/v3/logout', {
+    method: 'POST', headers: { Authorization: `Bearer ${registration.access_token}` },
+  });
   console.log(`${account.username} : enrôlé sans droits administrateur`);
 }
 console.log('Mots de passe locaux : server/runtime/demo-accounts.json (exclu de Git).');
