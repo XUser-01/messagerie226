@@ -76,4 +76,6 @@ footer { padding-top: 20px; border-top: 1px solid #dce2d7; }
 .create-room { max-width: 550px; padding: 35px; margin: 0 auto; }
 .create-room p { font-size: 13px; color: #53645d; line-height: 1.6; }
 .empty-list { color: #53645d; font-size: 14px; padding: 16px 20px; line-height: 1.7; }
+.attachment { padding: 16px 24px; background: white; border-top: 1px solid #dde3df; display: flex; flex-direction: column; gap: 12px; font-size: 13px; }
+.attachment input { max-width: 100%; }
 @media (max-width: 760px) { .workspace-main { display: flex; flex-direction: column; padding: 0; gap: 0; } .room-list { border-right: 0; border-bottom: 1px solid #dde3df; max-height: 300px; overflow: auto; } .workspace-header { gap: 12px; padding: 14px; flex-wrap: wrap; } .agent-summary { font-size: 11px; } .logout { padding: 9px; } .welcome-conversation { padding: 28px; } .create-room { padding: 24px; } .message { max-width: 95%; } .conversation { min-height: 450px; } }

@@ -1,6 +1,7 @@
 import { useEffect, useReducer, useState } from 'react';
 import { ClientEvent, EventType, MatrixEventEvent, Preset, RoomEvent, SyncState, Visibility } from 'matrix-js-sdk';
 import type { Connection } from './matrix';
+import { downloadEncryptedFile, MAX_FILE_SIZE, sendEncryptedFile } from './attachments';
 
 export function Workspace({ connection, onLogout, busy, error }: {
   connection: Connection; onLogout: () => Promise<void>; busy: boolean; error: string;
@@ -12,9 +13,11 @@ export function Workspace({ connection, onLogout, busy, error }: {
   const [recipients, setRecipients] = useState('');
   const [roomName, setRoomName] = useState('');
   const [text, setText] = useState('');
+  const [file, setFile] = useState<File | null>(null);
   const [working, setWorking] = useState(false);
   const [problem, setProblem] = useState('');
   const [encrypted, setEncrypted] = useState(false);
+  const [downloading, setDownloading] = useState('');
   const rooms = client.getRooms().filter((room) => ['join', 'invite'].includes(room.getMyMembership()));
   const room = client.getRoom(selected);
   const sync = client.getSyncState();
@@ -89,6 +92,21 @@ export function Workspace({ connection, onLogout, busy, error }: {
     finally { setWorking(false); refresh(); }
   }
 
+  async function attach() {
+    if (!file || !room || room.getMyMembership() !== 'join' || !synced) return;
+    setWorking(true); setProblem('');
+    try { await sendEncryptedFile(client, selected, file); setFile(null); }
+    catch { setProblem('Fichier non envoyé. Limite : 5 Mo ; salon chiffré et connexion requis.'); }
+    finally { setWorking(false); refresh(); }
+  }
+
+  async function download(event: (typeof events)[number]) {
+    setDownloading(event.getId() ?? 'file'); setProblem('');
+    try { await downloadEncryptedFile(client, event.getContent().file, event.getContent().body); }
+    catch { setProblem('Téléchargement ou vérification du fichier impossible.'); }
+    finally { setDownloading(''); }
+  }
+
   const events = room?.getLiveTimeline().getEvents().filter((event) =>
     !event.isRedacted() && [EventType.RoomMessage, EventType.RoomMessageEncrypted].includes(event.getType() as EventType)) ?? [];
 
@@ -103,7 +121,7 @@ export function Workspace({ connection, onLogout, busy, error }: {
         <div className="list-heading"><h1>Discussions</h1><button className="new-conversation" disabled={!synced} onClick={() => { setNewRoom(true); setProblem(''); }} aria-label="Nouvelle conversation">+</button></div>
         {!rooms.length && <p className="empty-list">Aucune discussion. Créez une conversation avec un autre agent enrôlé.</p>}
         {rooms.map((item) => <button key={item.roomId} className={`room-button ${selected === item.roomId ? 'selected' : ''}`}
-          onClick={() => { setSelected(item.roomId); setNewRoom(false); setText(''); setProblem(''); }}>
+          onClick={() => { setSelected(item.roomId); setNewRoom(false); setText(''); setFile(null); setProblem(''); }}>
           <span className="avatar" aria-hidden="true">{item.name.slice(0, 2).toUpperCase()}</span>
           <span><strong>{item.name}</strong><small>{item.getMyMembership() === 'invite' ? 'Invitation à accepter' : `${item.getJoinedMemberCount()} participant(s)`}</small></span>
         </button>)}
@@ -133,6 +151,7 @@ export function Workspace({ connection, onLogout, busy, error }: {
                 return <article className={`message ${event.getSender() === connection.userId ? 'mine' : ''}`} key={event.getId() ?? event.getTxnId()}>
                   <strong>{event.getSender()}</strong>
                   <p>{readable ? body : 'Message chiffré indisponible ou en cours de déchiffrement.'}</p>
+                  {readable && event.getContent().msgtype === 'm.file' && event.getContent().file && <button className="secondary" disabled={!!downloading} onClick={() => void download(event)}>{downloading === event.getId() ? 'Déchiffrement…' : 'Télécharger et déchiffrer'}</button>}
                   <small>{new Date(event.getTs()).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}{event.status ? ` · ${event.status}` : ''}</small>
                 </article>;
               })}
@@ -141,6 +160,15 @@ export function Workspace({ connection, onLogout, busy, error }: {
               <label htmlFor="message">Message</label><textarea id="message" maxLength={8000} rows={3} required value={text} onChange={(event) => setText(event.target.value)} disabled={working || !encrypted || !synced} />
               <button disabled={working || !encrypted || !synced || !text.trim()}>{working ? 'Envoi…' : 'Envoyer'}</button>
             </form>
+            <div className="attachment"><label htmlFor="attachment">Pièce jointe · 5 Mo maximum</label>
+              <input id="attachment" type="file" disabled={working || !encrypted || !synced} onChange={(event) => {
+                const chosen = event.target.files?.[0] ?? null; event.target.value = '';
+                if (chosen && chosen.size > MAX_FILE_SIZE) { setProblem('Fichier limité à 5 Mo.'); setFile(null); }
+                else { setFile(chosen); setProblem(''); }
+              }} />
+              {file && <p>{file.name} · {Math.ceil(file.size / 1024)} Ko</p>}
+              <button className="secondary" disabled={!file || working || !encrypted || !synced} onClick={() => void attach()}>{working ? 'Envoi…' : 'Chiffrer et envoyer le fichier'}</button>
+            </div>
           </>}
       </section>
     </main>

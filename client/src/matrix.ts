@@ -8,7 +8,8 @@ export type Connection = { client: MatrixClient; userId: string; deviceId: strin
 async function lockDevice(name: string): Promise<() => void> {
   if (!navigator.locks) throw new Error('Ce navigateur ne permet pas le verrouillage des clés.');
   return new Promise((resolve, reject) => {
-    void navigator.locks.request(name, { ifAvailable: true }, async (lock) => {
+    // Un rechargement peut précéder de peu la libération du verrou de l'ancienne page.
+    void navigator.locks.request(name, { signal: AbortSignal.timeout(5000) }, async (lock) => {
       if (!lock) { reject(new Error('Cette session est déjà ouverte dans un autre onglet.')); return; }
       await new Promise<void>((release) => resolve(release));
     }).catch(reject);
@@ -28,6 +29,8 @@ async function connect(session: Session): Promise<Connection> {
     await client.startClient({ initialSyncLimit: 20 });
     return { client, userId: session.userId, deviceId: session.deviceId, release };
   } catch (error) {
+    console.warn('Initialisation Matrix refusée', (error as { name?: string }).name,
+      (error as { errcode?: string }).errcode);
     client.stopClient(); release(); throw error;
   }
 }
