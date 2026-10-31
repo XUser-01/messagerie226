@@ -3,7 +3,7 @@
 Matrix est le protocole, Synapse son serveur et matrix-js-sdk une bibliothèque
 cliente. PostgreSQL conserve les événements ; les fichiers sont dans un volume
 séparé. Docker Compose décrit les services et leurs connexions, pas leur sécurité
-applicative. Le client React sera personnalisé sans réécrire Matrix.
+applicative. Le client React est personnalisé sans réécrire Matrix.
 
 ## Frontières de confiance
 
@@ -12,6 +12,7 @@ applicative. Le client React sera personnalisé sans réécrire Matrix.
 - PostgreSQL : données internes Synapse, inaccessible directement depuis l'hôte.
 - Futur service d'administration : droits administrateur côté serveur uniquement.
   Aucun jeton administrateur dans une variable VITE ni dans le navigateur.
+  Ce service est maintenant `server/admin-api.mjs` ; voir revocation.md.
 
 ## Chiffrement avant implémentation
 
@@ -23,9 +24,10 @@ Les fichiers doivent être chiffrés avant téléversement, et leur clé envoyé
 un événement lui-même chiffré. Aucun simple cadenas visuel ne prouve ces propriétés.
 
 La configuration `encryption_enabled_by_default_for_room_type` est une valeur par
-défaut, PAS une interdiction serveur des événements en clair. Avant d'ouvrir les
-comptes de démonstration, ajouter et tester une politique refusant les messages
-en clair. Un serveur ne peut pas déterminer arbitrairement si tout média envoyé
+défaut, PAS une interdiction serveur des événements en clair. Le module
+`server/modules/no_plaintext.py` ajoute maintenant cette interdiction aux voies
+ordinaires d'envoi, testée en HTTP 403 (voir message-policy.md).
+Un serveur ne peut pas déterminer arbitrairement si tout média envoyé
 est réellement chiffré : documenter cette limite et contrôler notre client.
 
 ## Identité, sessions et révocation à construire

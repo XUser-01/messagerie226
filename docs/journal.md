@@ -128,3 +128,39 @@ La création de groupes à plus de deux membres n'a pas encore été testée.
 deux enveloppes Megolm, sans body ni marqueur du message de test lisible.
 Portée : API d'événements, 100 derniers événements par salon rejoint ; pas
 d'inspection directe PostgreSQL ou de capture réseau à ce stade.
+
+## Étape 11 — pièces jointes et reprise de session
+
+matrix-encrypt-attachment 1.0.3 installé et figé. attachments.ts chiffre avant
+téléversement et transmet sa clé dans le message E2EE. Trois tests client passent,
+compilation réussie. Test navigateur : sélection du fichier fictif, envoi A dans
+le groupe, téléchargement/déchiffrement B ; comparaison binaire via fs dans
+l'outil de test navigateur : sameBytes=true, 100 octets.
+
+Un rechargement automatique pendant le développement a révélé une course entre
+libération de Web Lock et restauration. Le client attend maintenant au maximum
+cinq secondes l'ancien verrou, sans autoriser deux écritures simultanées.
+Les deux sessions ont repris après ce changement. Limites dans attachments.md.
+
+## Étape 12 — contrôle d'administration et révocation
+
+admin-bootstrap.mjs enrôle gestionnaire.demo et agent.test comme comptes Matrix
+ordinaires, et prépare service.admin réservé au backend. admin-api.mjs vérifie
+chaque session avec whoami et attribue les rôles depuis admin-policy.mjs. Les
+droits Synapse ne passent jamais dans le navigateur. Le service d'administration
+local a été lancé sur 127.0.0.1:3001 ; Vite transmet /api sans exposer les secrets.
+
+check-revocation.mjs passe en conditions réelles : jeton absent/invalide refusé,
+agent et rôle falsifié refusés, gestionnaire et compte technique protégés. Le
+compte de test rejoint un salon puis est désactivé. Réponse observée en 227 ms ;
+ancien token, sync, historique et nouveau login refusés. Le test ne mesure pas
+les requêtes déjà en cours. A/B restent actifs.
+
+AdminPanel.tsx affiche les statuts et une confirmation de révocation. App.tsx
+retire une session invalidée via les erreurs sync ou un whoami toutes les 5 s.
+Le gestionnaire voit le panneau et la liste ; les agents ordinaires n'ont pas
+le bouton. Le scénario de révocation avec écran cible ouvert reste à finir.
+Les limites Synapse ont été conservées ; le formulaire affiche le délai serveur.
+Tests supplémentaires HTTP : origine étrangère 403, corps trop grand 413,
+chemins privés via Vite 403. check-repository.mjs ne détecte aucun secret local
+dans les sources. Compilation et trois tests client réussis.

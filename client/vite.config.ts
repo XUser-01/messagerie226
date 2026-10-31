@@ -6,6 +6,10 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     // Le navigateur contacte le client local ; Vite transmet uniquement l'API Matrix.
-    proxy: { '/_matrix': { target: 'http://127.0.0.1:8008' } },
+    proxy: {
+      '/_matrix': { target: 'http://127.0.0.1:8008' },
+      '/api': { target: 'http://127.0.0.1:3001' },
+    },
+    fs: { deny: ['**/.env', '**/.env.*', '**/*.key', '**/*.pem', '**/server/runtime/**', '**/docker/runtime/**', '**/.git/**'] },
   },
 });

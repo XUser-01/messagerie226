@@ -74,3 +74,8 @@ export async function logoutAgent(connection: Connection): Promise<void> {
   connection.release();
   sessionStorage.removeItem(SESSION_KEY);
 }
+
+export function endInvalidSession(connection: Connection): void {
+  connection.client.stopClient(); connection.release();
+  sessionStorage.removeItem(SESSION_KEY);
+}

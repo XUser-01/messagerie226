@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { loginAgent, logoutAgent, restoreSession, type Connection } from './matrix';
+import { endInvalidSession, loginAgent, logoutAgent, restoreSession, type Connection } from './matrix';
+import { ClientEvent } from 'matrix-js-sdk';
 import { Workspace } from './Workspace';
 
 type ServerState =
@@ -13,8 +14,38 @@ export function App() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(true);
   const [authError, setAuthError] = useState('');
+  const [retryUntil, setRetryUntil] = useState(0);
+  const [now, setNow] = useState(Date.now());
+  const retrySeconds = Math.max(0, Math.ceil((retryUntil - now) / 1000));
   const [server, setServer] = useState<ServerState>({ phase: 'checking' });
   const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    if (!retryUntil) return;
+    const timer = window.setInterval(() => {
+      const time = Date.now(); setNow(time);
+      if (time >= retryUntil) setRetryUntil(0);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [retryUntil]);
+
+  useEffect(() => {
+    if (!connection) return;
+    let active = true;
+    function invalid(error: unknown) {
+      const code = (error as { errcode?: string })?.errcode;
+      if (active && ['M_UNKNOWN_TOKEN', 'M_USER_DEACTIVATED', 'M_MISSING_TOKEN'].includes(code ?? '')) {
+        active = false; endInvalidSession(connection!); setConnection(null);
+        setAuthError('Session expirée ou accès révoqué. Une reconnexion nécessite un compte actif.');
+      }
+    }
+    const onSync = (_state: unknown, _previous: unknown, data: { error?: unknown } | undefined) => {
+      if (data?.error) invalid(data.error);
+    };
+    connection.client.on(ClientEvent.Sync, onSync);
+    const timer = window.setInterval(() => { void connection.client.whoami().catch(invalid); }, 5000);
+    return () => { active = false; window.clearInterval(timer); connection.client.removeListener(ClientEvent.Sync, onSync); };
+  }, [connection]);
 
   useEffect(() => {
     let active = true;
@@ -27,10 +58,16 @@ export function App() {
   }, []);
 
   async function signIn(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setBusy(true); setAuthError('');
+    event.preventDefault();
+    if (busy || retrySeconds > 0) return;
+    setBusy(true); setAuthError('');
     try { setConnection(await loginAgent(username, password)); }
     catch (error) {
       const code = (error as { errcode?: string }).errcode;
+      if (code === 'M_LIMIT_EXCEEDED') {
+        const wait = (error as { getRetryAfterMs?: () => number | null }).getRetryAfterMs?.() ?? 30000;
+        setNow(Date.now()); setRetryUntil(Date.now() + Math.max(1000, wait));
+      }
       setAuthError(code === 'M_FORBIDDEN' ? 'Identifiant ou mot de passe incorrect.'
         : code === 'M_LIMIT_EXCEEDED' ? 'Trop de tentatives. Patientez avant de réessayer.'
         : 'Connexion impossible. Vérifiez le serveur et fermez les autres onglets de cette session.');
@@ -104,7 +141,7 @@ export function App() {
             <input id="agent" autoComplete="username" placeholder="Ex. agent.a" required value={username} onChange={(event) => setUsername(event.target.value)} disabled={busy} />
             <label htmlFor="password">Mot de passe</label>
             <input id="password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} disabled={busy} />
-            <button disabled={busy || server.phase !== 'ready'}>{busy ? 'Préparation de la session…' : 'Se connecter'}</button>
+            <button disabled={busy || server.phase !== 'ready' || retrySeconds > 0}>{busy ? 'Préparation de la session…' : retrySeconds ? `Réessayer dans ${retrySeconds} s` : 'Se connecter'}</button>
           </form>
           <div className="notice"><strong>Démonstration · données fictives</strong><p>Connexion par mot de passe. Double authentification et récupération des clés non encore configurées.</p></div>
         </section>

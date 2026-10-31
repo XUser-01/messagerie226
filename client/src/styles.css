@@ -78,4 +78,14 @@ footer { padding-top: 20px; border-top: 1px solid #dce2d7; }
 .empty-list { color: #53645d; font-size: 14px; padding: 16px 20px; line-height: 1.7; }
 .attachment { padding: 16px 24px; background: white; border-top: 1px solid #dde3df; display: flex; flex-direction: column; gap: 12px; font-size: 13px; }
 .attachment input { max-width: 100%; }
+.admin-panel { padding: 32px; }
+.admin-panel h1 { font-size: 30px; letter-spacing: -.7px; }
+.admin-panel > button { width: auto; }
+.agent-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 20px; margin: 28px 0; }
+.agent-card { background: white; border: 1px solid #dde3df; border-radius: 14px; padding: 24px; overflow-wrap: anywhere; }
+.agent-card h2 { font-size: 19px; }
+.agent-card p { color: #53645d; font-size: 13px; line-height: 1.6; }
+.agent-card button { margin-top: 10px; }
+.danger { background: #8c332c; }
+.danger:hover { background: #6c231e; }
 @media (max-width: 760px) { .workspace-main { display: flex; flex-direction: column; padding: 0; gap: 0; } .room-list { border-right: 0; border-bottom: 1px solid #dde3df; max-height: 300px; overflow: auto; } .workspace-header { gap: 12px; padding: 14px; flex-wrap: wrap; } .agent-summary { font-size: 11px; } .logout { padding: 9px; } .welcome-conversation { padding: 28px; } .create-room { padding: 24px; } .message { max-width: 95%; } .conversation { min-height: 450px; } }

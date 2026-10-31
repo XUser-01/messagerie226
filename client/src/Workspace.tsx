@@ -2,6 +2,7 @@ import { useEffect, useReducer, useState } from 'react';
 import { ClientEvent, EventType, MatrixEventEvent, Preset, RoomEvent, SyncState, Visibility } from 'matrix-js-sdk';
 import type { Connection } from './matrix';
 import { downloadEncryptedFile, MAX_FILE_SIZE, sendEncryptedFile } from './attachments';
+import { AdminPanel } from './AdminPanel';
 
 export function Workspace({ connection, onLogout, busy, error }: {
   connection: Connection; onLogout: () => Promise<void>; busy: boolean; error: string;
@@ -18,10 +19,20 @@ export function Workspace({ connection, onLogout, busy, error }: {
   const [problem, setProblem] = useState('');
   const [encrypted, setEncrypted] = useState(false);
   const [downloading, setDownloading] = useState('');
+  const [manager, setManager] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
   const rooms = client.getRooms().filter((room) => ['join', 'invite'].includes(room.getMyMembership()));
   const room = client.getRoom(selected);
   const sync = client.getSyncState();
   const synced = sync === SyncState.Prepared || sync === SyncState.Syncing;
+
+  useEffect(() => {
+    let active = true;
+    void fetch('/api/me', { headers: { Authorization: `Bearer ${client.getAccessToken()}` }, signal: AbortSignal.timeout(10000) })
+      .then(async (response) => { if (!response.ok) return; const me = await response.json(); if (active) setManager(me.role === 'gestionnaire'); })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, [client]);
 
   useEffect(() => {
     client.on(ClientEvent.Sync, refresh);
@@ -113,10 +124,11 @@ export function Workspace({ connection, onLogout, busy, error }: {
   return <div className="workspace">
     <header className="workspace-header"><a className="brand" href="/">M<span>226</span></a>
       <div className="agent-summary"><strong>{connection.userId}</strong><span>{synced ? 'Connecté au serveur' : 'Synchronisation en cours…'}</span></div>
+      {manager && <button className="secondary logout" onClick={() => setShowAdmin((value) => !value)}>{showAdmin ? 'Discussions' : 'Administration'}</button>}
       <button className="secondary logout" onClick={() => void onLogout()} disabled={busy}>Se déconnecter</button>
     </header>
     {(error || problem) && <p className="error" role="alert">{error || problem}</p>}
-    <main className="workspace-main">
+    {showAdmin && manager ? <AdminPanel client={client} /> : <main className="workspace-main">
       <aside className="room-list" aria-label="Discussions">
         <div className="list-heading"><h1>Discussions</h1><button className="new-conversation" disabled={!synced} onClick={() => { setNewRoom(true); setProblem(''); }} aria-label="Nouvelle conversation">+</button></div>
         {!rooms.length && <p className="empty-list">Aucune discussion. Créez une conversation avec un autre agent enrôlé.</p>}
@@ -171,6 +183,6 @@ export function Workspace({ connection, onLogout, busy, error }: {
             </div>
           </>}
       </section>
-    </main>
+    </main>}
   </div>;
 }

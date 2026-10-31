@@ -1,7 +1,8 @@
 // Tests réels de l'authentification : exclusivement les deux comptes fictifs.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-const accounts = JSON.parse(readFileSync(new URL('./runtime/demo-accounts.json', import.meta.url)));
+const accounts = JSON.parse(readFileSync(new URL('./runtime/demo-accounts.json', import.meta.url)))
+  .filter((account) => ['agent.a', 'agent.b'].includes(account.username));
 const baseUrl = 'http://127.0.0.1:8008';
 async function call(path, method = 'GET', body, token) {
   const response = await fetch(`${baseUrl}${path}`, { method,
