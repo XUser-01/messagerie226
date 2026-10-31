@@ -50,3 +50,19 @@ Résultat transmis le 31 octobre 2026 : Synapse et PostgreSQL healthy,
 initialisation Exited avec succès et réponse `versions` de l'API Matrix.
 Les erreurs de droits conservées dans l'extrait précèdent cette réussite.
 La disponibilité du serveur est validée ; ce résultat ne prouve pas l'E2EE.
+
+## Étape 5 — premier client React
+
+Fichiers : `client/package.json`, verrou npm, configuration TypeScript/Vite,
+`client/src/App.tsx`, `main.tsx`, styles et déclaration des types Vite.
+React affiche les états vérification/succès/échec. `fetch` interroge l'API via
+le proxy local Vite ; délai maximal de huit secondes et bouton de nouvelle
+tentative. Les versions Matrix reçues doivent être une liste non vide de textes.
+Aucune authentification, session ni fonction d'envoi n'est encore ajoutée.
+
+Commandes exécutées : `npm install`, `npm run build`, `npm run dev`.
+La première compilation signalait les types CSS manquants ; ajout de
+`vite-env.d.ts`, puis compilation réussie. Test navigateur réel : état
+« Serveur Matrix accessible », bouton de vérification essayé, capture visuelle
+en vue étroite. Le scénario serveur arrêté n'a pas été exécuté.
+Le port de développement est 127.0.0.1:5173 et le proxy cible 127.0.0.1:8008.

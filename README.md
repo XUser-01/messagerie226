@@ -50,6 +50,12 @@ retourner `versions`. Cela prouve la disponibilité, pas le chiffrement.
 Pour arrêter sans effacer les données : `docker compose down`.
 Ne pas utiliser `down -v` : cela détruirait les volumes.
 
+### Premier écran web
+
+Depuis `client/` : `npm ci`, `npm run build`, puis `npm run dev`.
+Ouvrir http://127.0.0.1:5173 pour vérifier la connexion du navigateur à Synapse.
+Ce premier écran ne propose pas encore de login ni d'envoi de messages.
+
 ## Comptes de démonstration
 
 Aucun compte créé. Inscription publique interdite. L'enrôlement administrateur
