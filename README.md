@@ -4,8 +4,9 @@ Messagerie auto-hébergée pour des agents fictifs de l'administration burkinab�
 Objectif : conversations privées, groupes et fichiers chiffrés, enrôlement contrôlé
 et révocation. Aucun agrément officiel ni valeur juridique revendiqués.
 
-**État : socle initial uniquement. Aucun test de serveur ou de chiffrement réussi
-à ce stade. Le client et la révocation restent à construire.**
+**État : serveur validé le 31 octobre 2026 dans la session utilisateur : PostgreSQL
+et Synapse healthy, API Matrix `/versions` accessible. Chiffrement et révocation
+non encore validés. Client en construction.**
 
 ## Architecture
 

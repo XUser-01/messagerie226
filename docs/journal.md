@@ -45,3 +45,8 @@ reste dans le volume ; elle signe l'identité serveur, ce n'est pas une clé E2E
 Source vérifiée : https://github.com/element-hq/synapse/blob/v1.164.1/docker/start.py
 Validation statique : Compose. Test réel restant dans la session utilisateur :
 `docker compose up -d --wait --wait-timeout 120`, puis API versions.
+
+Résultat transmis le 31 octobre 2026 : Synapse et PostgreSQL healthy,
+initialisation Exited avec succès et réponse `versions` de l'API Matrix.
+Les erreurs de droits conservées dans l'extrait précèdent cette réussite.
+La disponibilité du serveur est validée ; ce résultat ne prouve pas l'E2EE.
