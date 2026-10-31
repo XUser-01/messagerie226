@@ -105,3 +105,26 @@ Module non encore activé dans le processus Synapse courant : la session
 utilisateur doit appliquer `docker compose up -d --wait --wait-timeout 120`.
 Les limites sont explicites dans `docs/message-policy.md` : métadonnées,
 enveloppes non vérifiables sans clés et téléversements de fichiers hors filtre.
+
+## Étape 10 — politique active, messages et groupe
+
+Après activation utilisateur : API HTTP 200. `node server/check-message-policy.mjs`
+passe sur le serveur réel : création de salon autorisée et événements de texte
+clair/custom refusés en HTTP 403, puis fermeture de la session de test.
+
+Client : Workspace.tsx ajoute salons privés, invitations explicites, groupe nommé,
+historique et texte. Avant chaque envoi, le moteur Rust doit confirmer le
+chiffrement du salon ; le SDK chiffre l'événement. Pas de repli en clair.
+Le mode de confiance par défaut du SDK est conservé : appareils non vérifiés,
+avertissement visible. Vérification croisée des identités toujours à faire.
+
+`npm run build` passe après correction du nom d'enum RoomMessageEncrypted.
+Test réel avec deux onglets et appareils distincts A/B : création privée,
+invitation acceptée, texte A vers B puis B vers A lisible après déchiffrement.
+Rechargement de B : les deux messages sont encore déchiffrés grâce aux clés
+IndexedDB. Groupe nommé créé et invitation acceptée, avec deux participants.
+La création de groupes à plus de deux membres n'a pas encore été testée.
+`node server/check-encrypted-events.mjs` inspecte les événements bruts Matrix :
+deux enveloppes Megolm, sans body ni marqueur du message de test lisible.
+Portée : API d'événements, 100 derniers événements par salon rejoint ; pas
+d'inspection directe PostgreSQL ou de capture réseau à ce stade.

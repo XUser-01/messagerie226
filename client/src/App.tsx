@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { loginAgent, logoutAgent, restoreSession, type Connection } from './matrix';
+import { Workspace } from './Workspace';
 
 type ServerState =
   | { phase: 'checking' }
@@ -74,6 +75,8 @@ export function App() {
     return () => { active = false; window.clearTimeout(timeout); controller.abort(); };
   }, [attempt]);
 
+  if (connection) return <Workspace connection={connection} onLogout={signOut} busy={busy} error={authError} />;
+
   return (
     <div className="page">
       <header><a className="brand" href="/">M<span>226</span></a><span>Prototype · comptes fictifs uniquement</span></header>
@@ -86,8 +89,8 @@ export function App() {
         </section>
         <section className="card" aria-labelledby="connection-title">
           <p className="eyebrow">CONNEXION AU SERVICE</p>
-          <h2 id="connection-title">{connection ? 'Votre espace agent' : 'Messagerie souveraine'}</h2>
-          <p>{connection ? 'Votre identité est authentifiée par le serveur local.' : 'Connectez-vous avec votre compte agent préalablement enrôlé.'}</p>
+          <h2 id="connection-title">Messagerie souveraine</h2>
+          <p>Connectez-vous avec votre compte agent préalablement enrôlé.</p>
           <div className={`status ${server.phase}`} role="status" aria-live="polite">
             <span className="dot" aria-hidden="true" />
             <div><strong>{server.phase === 'ready' ? 'Serveur Matrix accessible' : server.phase === 'checking' ? 'Vérification en cours…' : 'Serveur inaccessible'}</strong>
@@ -96,17 +99,13 @@ export function App() {
           </div>
           {server.phase === 'failed' && <button type="button" onClick={() => setAttempt((value) => value + 1)}>Vérifier à nouveau</button>}
           {authError && <p className="error" role="alert">{authError}</p>}
-          {connection ? <>
-            <dl className="identity"><dt>Identité Matrix</dt><dd>{connection.userId}</dd><dt>Appareil</dt><dd>{connection.deviceId}</dd></dl>
-            <div className="status ready"><span className="dot" /><div><strong>Moteur de chiffrement initialisé</strong><p>Rust Crypto est chargé. Les échanges de messages restent à tester.</p></div></div>
-            <button disabled={busy} onClick={() => void signOut()}>{busy ? 'Déconnexion…' : 'Se déconnecter'}</button>
-          </> : <form onSubmit={(event) => void signIn(event)}>
+          <form onSubmit={(event) => void signIn(event)}>
             <label htmlFor="agent">Identifiant agent</label>
             <input id="agent" autoComplete="username" placeholder="Ex. agent.a" required value={username} onChange={(event) => setUsername(event.target.value)} disabled={busy} />
             <label htmlFor="password">Mot de passe</label>
             <input id="password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} disabled={busy} />
             <button disabled={busy || server.phase !== 'ready'}>{busy ? 'Préparation de la session…' : 'Se connecter'}</button>
-          </form>}
+          </form>
           <div className="notice"><strong>Démonstration · données fictives</strong><p>Connexion par mot de passe. Double authentification et récupération des clés non encore configurées.</p></div>
         </section>
       </main>

@@ -38,5 +38,6 @@ docker compose up -d --wait --wait-timeout 120
 ```
 
 Tests unitaires : `python -m unittest discover -s server/modules -p 'test_*.py' -v`.
-Les six scénarios passent localement. Activation dans le serveur et test HTTP
-du rejet des messages en clair restent à vérifier après le redémarrage.
+Les six scénarios passent localement. Après le redémarrage utilisateur,
+`node server/check-message-policy.mjs` a confirmé la création d'un salon avec
+chiffrement, puis HTTP 403 sur m.room.message et custom.message en clair.

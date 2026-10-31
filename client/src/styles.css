@@ -39,3 +39,41 @@ button:focus-visible, a:focus-visible { outline: 3px solid #b98c36; outline-offs
 .notice p { line-height: 1.6; color: #53645d; margin-bottom: 0; }
 footer { padding-top: 20px; border-top: 1px solid #dce2d7; }
 @media (max-width: 760px) { main { grid-template-columns: 1fr; gap: 28px; padding: 40px 0; } .card { padding: 25px; } .milestone { display: none; } header > span { max-width: 170px; text-align: right; } footer { flex-wrap: wrap; font-size: 12px; } }
+.workspace { max-width: 1500px; margin: auto; min-height: 100svh; background: #f4f6f4; }
+.workspace-header { padding: 18px 24px; background: #fff; border-bottom: 1px solid #dde3df; }
+.agent-summary { display: flex; flex-direction: column; flex: 1; font-size: 13px; min-width: 0; overflow-wrap: anywhere; }
+.agent-summary span { color: #53645d; font-size: 12px; margin-top: 5px; }
+.secondary { background: white; color: #0b5d3b; border: 1px solid #b7c1bb; }
+.secondary:hover { background: #e3f1ea; }
+.logout { width: auto; font-size: 12px; padding: 12px; }
+.workspace-main { padding: 0; display: grid; grid-template-columns: 310px 1fr; gap: 0; align-items: stretch; min-height: calc(100svh - 85px); }
+.room-list { background: white; border-right: 1px solid #dde3df; }
+.list-heading { display: flex; align-items: center; justify-content: space-between; padding: 20px; }
+.list-heading h1 { font-size: 23px; letter-spacing: -.7px; margin: 0; }
+.new-conversation { width: 42px; height: 42px; padding: 0; font-size: 26px; }
+.room-button { display: flex; gap: 12px; align-items: center; border-radius: 0; background: white; color: #14201b; text-align: left; padding: 16px; border-bottom: 1px solid #eef1ef; }
+.room-button:hover, .room-button.selected { background: #e3f1ea; }
+.room-button > span:last-child { min-width: 0; }
+.room-button strong { display: block; overflow-wrap: anywhere; }
+.room-button small { display: block; font-size: 12px; color: #53645d; margin-top: 6px; font-weight: 400; }
+.avatar { display: grid; place-items: center; border-radius: 50%; background: #e3f1ea; color: #0b5d3b; width: 42px; height: 42px; flex: none; }
+.conversation { min-width: 0; display: flex; flex-direction: column; }
+.welcome-conversation { margin: auto; padding: 45px; max-width: 600px; line-height: 1.7; }
+.security-note { font-size: 12px; color: #53645d; background: #eef2eb; margin: 0; padding: 12px 24px; line-height: 1.6; }
+.welcome-conversation .security-note { margin-top: 24px; border-radius: 9px; }
+.conversation-heading { background: white; padding: 20px 24px; border-bottom: 1px solid #dde3df; }
+.conversation-heading h2 { margin: 0; font-size: 20px; overflow-wrap: anywhere; }
+.conversation-heading p { font-size: 12px; color: #0b5d3b; margin-bottom: 0; }
+.messages { flex: 1; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+.message { max-width: 80%; border: 1px solid #dde3df; border-radius: 12px; background: white; padding: 14px 18px; align-self: flex-start; overflow-wrap: anywhere; }
+.message.mine { background: #e3f1ea; align-self: flex-end; }
+.message strong { font-size: 11px; font-weight: 600; color: #53645d; }
+.message p { white-space: pre-wrap; font-size: 15px; line-height: 1.6; }
+.message small { color: #53645d; font-size: 11px; }
+.composer { margin: 0; padding: 18px 24px; border-top: 1px solid #dde3df; background: white; }
+.composer textarea { resize: vertical; min-height: 65px; max-height: 200px; border: 1px solid #b7c1bb; border-radius: 9px; padding: 12px; font: inherit; }
+.composer button { align-self: flex-end; width: auto; padding: 12px 28px; }
+.create-room { max-width: 550px; padding: 35px; margin: 0 auto; }
+.create-room p { font-size: 13px; color: #53645d; line-height: 1.6; }
+.empty-list { color: #53645d; font-size: 14px; padding: 16px 20px; line-height: 1.7; }
+@media (max-width: 760px) { .workspace-main { display: flex; flex-direction: column; padding: 0; gap: 0; } .room-list { border-right: 0; border-bottom: 1px solid #dde3df; max-height: 300px; overflow: auto; } .workspace-header { gap: 12px; padding: 14px; flex-wrap: wrap; } .agent-summary { font-size: 11px; } .logout { padding: 9px; } .welcome-conversation { padding: 28px; } .create-room { padding: 24px; } .message { max-width: 95%; } .conversation { min-height: 450px; } }
