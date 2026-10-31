@@ -91,3 +91,17 @@ environ 7,8 Mo non compressés : optimisation faible connexion non encore faite.
 Test navigateur : agent A connecté, Rust Crypto initialisé ; rechargement avec
 même identifiant d'appareil ; déconnexion ; compte inexistant refusé avec une
 erreur lisible. Aucun message chiffré échangé pendant cette étape.
+
+L'agent B réussit les tests HTTP mais le test navigateur a rencontré la
+limitation de tentatives Synapse. Elle n'a pas été désactivée. Validation du
+moteur Rust et de la reprise navigateur obtenue avec A uniquement.
+
+## Étape 9 — politique serveur avant les messages
+
+Module no_plaintext via le callback spam checker officiel, sans cryptographie
+maison. Six tests unitaires de politique passent. Compose validé statiquement.
+Migration ciblée de la configuration locale exécutée avec sauvegarde hors Git.
+Module non encore activé dans le processus Synapse courant : la session
+utilisateur doit appliquer `docker compose up -d --wait --wait-timeout 120`.
+Les limites sont explicites dans `docs/message-policy.md` : métadonnées,
+enveloppes non vérifiables sans clés et téléversements de fichiers hors filtre.

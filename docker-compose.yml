@@ -35,8 +35,10 @@ services:
         condition: service_healthy
     environment:
       SYNAPSE_CONFIG_PATH: /config/homeserver.yaml
+      PYTHONPATH: /modules
     volumes:
       - ./docker/runtime:/config:ro
+      - ./server/modules:/modules:ro
       - synapse_data:/data
     ports:
       - '127.0.0.1:8008:8008'

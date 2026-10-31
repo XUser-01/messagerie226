@@ -37,6 +37,7 @@ const config = {
   registration_shared_secret: secret(),
   max_upload_size: '10M',
   enable_metrics: false,
+  modules: [{ module: 'no_plaintext.NoPlaintext', config: {} }],
 };
 mkdirSync(resolve(root, 'docker/runtime'), { recursive: true });
 // JSON est un sous-ensemble valide de YAML, accepté par Synapse.
