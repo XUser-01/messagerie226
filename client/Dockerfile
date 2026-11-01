@@ -1,9 +1,11 @@
 FROM node:24-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN node --version && npm --version && npm ci --include=dev \
+    && test -f node_modules/vite/bin/vite.js \
+    && test -f node_modules/typescript/package.json
 COPY . .
-RUN npm run build
+RUN npm run build && test -s /app/dist/index.html
 
 FROM nginx:1.30.6-alpine
 COPY nginx.conf /etc/nginx/nginx.conf

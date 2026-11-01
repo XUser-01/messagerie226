@@ -196,3 +196,9 @@ Reprise après saturation du disque : environ 4,7 Go disponibles. Compilation
 de production réussie (TypeScript puis Vite), trois tests de pièces jointes
 et six tests Python réussis. Contrôle des sources : aucun secret local détecté.
 Le lancement Docker complet reste distinct de ces validations de code.
+
+Le build Docker utilisateur atteint la copie finale mais /app/dist manque,
+malgré une étape npm déclarée réussie. Cause non déterminée avec ce journal.
+Dockerfile renforcé : dépendances de développement explicites, présence des
+outils et du HTML compilé contrôlée. Reconstruction sans cache et journal
+complet demandés ; aucun conteneur web déclaré validé à ce stade.
