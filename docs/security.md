@@ -66,8 +66,12 @@ Temps de réponse de la révocation mesuré : 227 ms (requêtes en cours non mes
 - Mots de passe de démonstration en clair dans `server/runtime/demo-accounts.json`
   (hors Git, données fictives, protection par les permissions du système).
 - HTTP limité au PC de développement ; HTTPS requis ailleurs.
-- L'enrôlement se fait par script ; l'API d'administration n'expose pas de
-  création de compte ni d'attribution de rôle. [À CONFIRMER avec l'équipe]
+- L'enrôlement et l'attribution des rôles se font côté serveur par scripts
+  (`admin-bootstrap.mjs`, `enroll-demo.mjs`), sans console d'administration
+  complète. C'est un choix de prototype : les agents sont pré-enrôlés et
+  l'inscription publique est interdite. Une version de production devrait
+  intégrer l'enrôlement et les rôles dans une console d'administration
+  sécurisée ou un annuaire institutionnel.
 - Un moteur de chiffrement initialisé n'est pas une preuve qu'un message a été
   chiffré.
 
@@ -114,6 +118,9 @@ Temps de réponse de la révocation mesuré : 227 ms (requêtes en cours non mes
 - Le nom Matrix du serveur ne doit pas être changé après la création des
   identités. Le prototype est destiné aux données fictives et sans fédération.
 
-## 9. À confirmer
-- [À CONFIRMER] Si les horodatages et les participants d'un salon sont
-  visibles du serveur (non précisé dans `docs/message-policy.md`).
+## 9. Métadonnées visibles du serveur
+Le chiffrement E2EE protège le contenu des communications mais ne masque pas
+l'ensemble des métadonnées. Le serveur connaît notamment l'appartenance aux
+salons, les identifiants des utilisateurs, l'expéditeur de chaque événement et
+les horodatages techniques nécessaires au fonctionnement de Matrix. Il ne peut
+pas lire le texte des messages ni le contenu des fichiers chiffrés.
