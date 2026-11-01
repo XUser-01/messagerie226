@@ -25,3 +25,28 @@ for (const name of files) {
   }
 }
 console.log(`${files.length} fichiers de source contrôlés : aucun secret local détecté.`);
+if (process.argv.includes('--history')) {
+  const git = (args, options = {}) => execFileSync('git', ['-c', `safe.directory=${safe}`, ...args],
+    { cwd: root, maxBuffer: 32 * 1024 * 1024, ...options });
+  const objects = git(['rev-list', '--objects', '--all'], { encoding: 'utf8' }).trim().split('\n').filter(Boolean);
+  for (const object of objects) {
+    const name = object.slice(object.indexOf(' ') + 1);
+    assert.ok(!/^(server\/runtime\/|docker\/runtime\/|\.env$|client\/node_modules\/)/.test(name), 'Fichier privé présent dans l’historique');
+  }
+  const ids = objects.map((line) => line.split(' ')[0]).join('\n') + '\n';
+  const types = git(['cat-file', '--batch-check=%(objectname) %(objecttype)'], { input: ids, encoding: 'utf8' });
+  const blobs = types.trim().split('\n').filter((line) => line.endsWith(' blob')).map((line) => line.split(' ')[0]);
+  const contents = git(['cat-file', '--batch'], { input: blobs.join('\n') + '\n' });
+  let offset = 0;
+  for (const id of blobs) {
+    const end = contents.indexOf(10, offset);
+    const size = Number(contents.subarray(offset, end).toString().split(' ')[2]);
+    assert.ok(Number.isSafeInteger(size) && size >= 0, 'Réponse Git invalide');
+    const content = contents.subarray(end + 1, end + 1 + size);
+    for (const secret of secrets.filter((value) => typeof value === 'string' && value.length >= 16)) {
+      assert.ok(!content.includes(Buffer.from(secret)), `Secret local détecté dans l’objet ${id} — valeur non affichée`);
+    }
+    offset = end + 1 + size + 1;
+  }
+  console.log(`${blobs.length} versions de fichiers contrôlées dans l’historique : aucun secret local connu détecté.`);
+}

@@ -227,3 +227,19 @@ Connexion gestionnaire et liste des statuts via API Docker réussies : A/B actif
 agent.test révoqué. Aucune nouvelle révocation effectuée dans ce dernier scénario.
 Captures de preuve enregistrées dans outputs hors dépôt. Les limites MFA,
 vérification d'appareils, récupération des clés et HTTPS distant restent ouvertes.
+
+## Étape 16 — interface et préparation du partage GitHub
+
+Refonte de l'accueil et de l'espace de discussion : navigation latérale,
+recherche locale, filtres toutes/groupes nommés/invitations, panneau des membres,
+champ de message compact, pièce jointe intégrée et retour à la liste sur mobile.
+Icônes SVG locales ; aucune dépendance ou police distante ajoutée.
+Les erreurs de déchiffrement utilisent un texte français et ne sont plus traitées
+comme du contenu lisible. Aucun changement de protocole ou de droits Matrix.
+
+Compilation TypeScript/Vite réussie avec RAYON_NUM_THREADS=1 après un manque
+de mémoire du compilateur ; trois tests des pièces jointes réussis. Recherche,
+activation clavier, sélection d'un salon et affichage des membres contrôlés
+dans le navigateur. Reconstruction de l'image web nécessaire pour voir la
+nouvelle interface sur 8088. Contrôle de 50 sources et de 105 versions de
+fichiers Git : aucun secret local connu détecté avant publication privée.

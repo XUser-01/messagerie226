@@ -1,8 +1,9 @@
-import { useEffect, useReducer, useState } from 'react';
+import { useEffect, useReducer, useRef, useState } from 'react';
 import { ClientEvent, EventType, MatrixEventEvent, Preset, RoomEvent, RoomStateEvent, SyncState, Visibility } from 'matrix-js-sdk';
 import type { Connection } from './matrix';
 import { downloadEncryptedFile, MAX_FILE_SIZE, sendEncryptedFile } from './attachments';
 import { AdminPanel } from './AdminPanel';
+import { Icon } from './Icon';
 
 export function Workspace({ connection, onLogout, busy, error }: {
   connection: Connection; onLogout: () => Promise<void>; busy: boolean; error: string;
@@ -21,7 +22,15 @@ export function Workspace({ connection, onLogout, busy, error }: {
   const [downloading, setDownloading] = useState('');
   const [manager, setManager] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
-  const rooms = client.getRooms().filter((room) => ['join', 'invite'].includes(room.getMyMembership()));
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<'all' | 'groups' | 'invites'>('all');
+  const [details, setDetails] = useState(false);
+  const messagesRef = useRef<HTMLDivElement>(null);
+  const rooms = client.getRooms().filter((room) => ['join', 'invite'].includes(room.getMyMembership()))
+    .sort((a, b) => b.getLastActiveTimestamp() - a.getLastActiveTimestamp());
+  const visibleRooms = rooms.filter((item) => item.name.toLocaleLowerCase('fr').includes(search.toLocaleLowerCase('fr'))
+    && (filter === 'all' || (filter === 'invites' ? item.getMyMembership() === 'invite' : !!item.currentState.getStateEvents(EventType.RoomName, ''))));
+  const agentName = client.getUser(connection.userId)?.displayName || connection.userId.split(':')[0].slice(1);
   const room = client.getRoom(selected);
   const sync = client.getSyncState();
   const synced = sync === SyncState.Prepared || sync === SyncState.Syncing;
@@ -125,26 +134,44 @@ export function Workspace({ connection, onLogout, busy, error }: {
   const events = room?.getLiveTimeline().getEvents().filter((event) =>
     !event.isRedacted() && [EventType.RoomMessage, EventType.RoomMessageEncrypted].includes(event.getType() as EventType)) ?? [];
 
-  return <div className="workspace">
-    <header className="workspace-header"><a className="brand" href="/">M<span>226</span></a>
-      <div className="agent-summary"><strong>{connection.userId}</strong><span>{synced ? 'Connecté au serveur' : 'Synchronisation en cours…'}</span></div>
-      {manager && <button className="secondary logout" onClick={() => setShowAdmin((value) => !value)}>{showAdmin ? 'Discussions' : 'Administration'}</button>}
-      <button className="secondary logout" onClick={() => void onLogout()} disabled={busy}>Se déconnecter</button>
+  useEffect(() => {
+    const area = messagesRef.current;
+    if (area) area.scrollTop = area.scrollHeight;
+  }, [selected, events.length]);
+
+  return <div className={`workspace ${!showAdmin && (selected || newRoom) ? 'mobile-conversation' : ''}`}>
+    <header className="workspace-header"><a className="brand" href="/">M<span>226</span><small>MESSAGERIE SOUVERAINE</small></a>
+      <span className={`connection-badge ${synced ? 'online' : ''}`}><i />{synced ? 'Service connecté' : 'Synchronisation…'}</span>
+      <div className="agent-summary"><span className="avatar small">{agentName.slice(0, 2).toUpperCase()}</span><div><strong>{agentName}</strong><small>Compte de démonstration</small></div></div>
+      <button className="icon-button logout" onClick={() => void onLogout()} disabled={busy} aria-label="Se déconnecter" title="Se déconnecter"><Icon name="logout" /></button>
     </header>
-    {(error || problem) && <p className="error" role="alert">{error || problem}</p>}
-    {showAdmin && manager ? <AdminPanel client={client} /> : <main className="workspace-main">
+    {(error || problem) && <p className="error workspace-error" role="alert">{error || problem}</p>}
+    <div className="app-body">
+      <nav className="navigation-rail" aria-label="Navigation principale">
+        <button className={!showAdmin ? 'rail-button active' : 'rail-button'} onClick={() => setShowAdmin(false)} aria-label="Discussions" title="Discussions"><Icon name="chat" /><span>Messages</span></button>
+        {manager && <button className={showAdmin ? 'rail-button active' : 'rail-button'} onClick={() => setShowAdmin(true)} aria-label="Administration" title="Administration"><Icon name="shield" /><span>Accès</span></button>}
+        <div className="rail-foot"><span>BF</span><small>Prototype</small></div>
+      </nav>
+    {showAdmin && manager ? <AdminPanel client={client} /> : <main className={`workspace-main ${details && room && !newRoom ? 'with-details' : ''}`}>
       <aside className="room-list" aria-label="Discussions">
-        <div className="list-heading"><h1>Discussions</h1><button className="new-conversation" disabled={!synced} onClick={() => { setNewRoom(true); setProblem(''); }} aria-label="Nouvelle conversation">+</button></div>
+        <div className="list-heading"><div><p className="eyebrow">VOTRE ESPACE</p><h1>Discussions <span>{rooms.length}</span></h1></div><button className="new-conversation" disabled={!synced} onClick={() => { setNewRoom(true); setProblem(''); }} aria-label="Nouvelle conversation" title="Nouvelle conversation"><Icon name="plus" /></button></div>
+        <div className="search-field"><Icon name="search" size={17} /><input aria-label="Rechercher une discussion" placeholder="Rechercher une discussion" value={search} onChange={(event) => setSearch(event.target.value)} />{search && <button className="icon-button" onClick={() => setSearch('')} aria-label="Effacer la recherche"><Icon name="close" size={15} /></button>}</div>
+        <div className="room-filters" role="group" aria-label="Filtrer les discussions">{([['all', 'Toutes'], ['groups', 'Groupes nommés'], ['invites', 'Invitations']] as const).map(([value, label]) => <button key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>)}</div>
+        <div className="room-scroll">
         {!rooms.length && <p className="empty-list">Aucune discussion. Créez une conversation avec un autre agent enrôlé.</p>}
-        {rooms.map((item) => <button key={item.roomId} className={`room-button ${selected === item.roomId ? 'selected' : ''}`}
+        {!!rooms.length && !visibleRooms.length && <p className="empty-list">Aucune discussion trouvée. Essayez un autre nom ou un autre filtre.</p>}
+        {visibleRooms.map((item) => <button key={item.roomId} className={`room-button ${selected === item.roomId && !newRoom ? 'selected' : ''}`} aria-current={selected === item.roomId && !newRoom ? 'true' : undefined}
           onClick={() => { setSelected(item.roomId); setNewRoom(false); setText(''); setFile(null); setProblem(''); }}>
           <span className="avatar" aria-hidden="true">{item.name.slice(0, 2).toUpperCase()}</span>
-          <span><strong>{item.name}</strong><small>{item.getMyMembership() === 'invite' ? 'Invitation à accepter' : `${item.getJoinedMemberCount()} participant(s)`}</small></span>
+          <span className="room-copy"><strong>{item.name}</strong><small>{item.getMyMembership() === 'invite' ? 'Invitation à accepter' : `${item.getJoinedMemberCount()} participant(s)`}</small></span>
+          {item.getMyMembership() === 'invite' ? <span className="invite-dot" aria-label="Invitation" /> : <Icon name="lock" size={13} />}
         </button>)}
+        </div><div className="list-footer"><Icon name="shield" size={16} /><span>Infrastructure auto-hébergée<small>Prototype · données fictives</small></span></div>
       </aside>
       <section className="conversation" aria-label="Conversation">
+        <button className="mobile-back" onClick={() => { setSelected(''); setNewRoom(false); }}><Icon name="back" size={18} /> Toutes les discussions</button>
         {newRoom ? <form className="create-room" onSubmit={(event) => void createConversation(event)}>
-          <p className="eyebrow">NOUVEL ÉCHANGE</p><h2>Discussion ou groupe</h2>
+          <span className="feature-icon"><Icon name="plus" size={27} /></span><p className="eyebrow">NOUVEL ÉCHANGE</p><h2>Une nouvelle conversation.</h2><p>Invitez un ou plusieurs agents pour commencer à échanger.</p>
           <label htmlFor="recipients">Agents à inviter</label>
           <input id="recipients" placeholder="Ex. agent.b" required value={recipients} onChange={(event) => setRecipients(event.target.value)} disabled={working} />
           <p>Plusieurs identifiants peuvent être séparés par une virgule.</p>
@@ -153,40 +180,43 @@ export function Workspace({ connection, onLogout, busy, error }: {
           <p>Le nom et la liste des membres sont visibles par le serveur. N’y placez pas d’information confidentielle.</p>
           <button disabled={working}>{working ? 'Création…' : 'Créer la conversation chiffrée'}</button>
           <button type="button" className="secondary" onClick={() => setNewRoom(false)}>Annuler</button>
-        </form> : !selected ? <div className="welcome-conversation"><p className="eyebrow">MESSAGERIE SOUVERAINE</p><h2>Vos échanges commencent ici.</h2><p>Sélectionnez une discussion ou créez-en une nouvelle.</p><p className="security-note">Prototype local · comptes fictifs uniquement.<br />Double authentification et vérification des appareils à venir.</p></div>
+        </form> : !selected ? <div className="welcome-conversation"><div className="welcome-art"><Icon name="chat" size={54} /><span><Icon name="lock" size={20} /></span></div><p className="eyebrow">PROCHES DANS L’ÉCHANGE</p><h2>Un espace pour<br />travailler ensemble.</h2><p>Retrouvez vos discussions à gauche, ou invitez un agent à une nouvelle conversation.</p><button className="welcome-action" disabled={!synced} onClick={() => setNewRoom(true)}><Icon name="plus" size={18} /> Nouvelle conversation</button><p className="welcome-caption"><Icon name="lock" size={14} /> Messages chiffrés dans les salons compatibles.</p><p className="security-note">Données fictives uniquement. Vérification des appareils et récupération des clés à venir.</p></div>
           : !room ? <p className="welcome-conversation">Chargement de la conversation…</p>
           : room.getMyMembership() === 'invite' ? <div className="welcome-conversation"><h2>{room.name}</h2><p>Vous avez reçu une invitation.</p><button disabled={working || !synced} onClick={() => void join()}>Accepter l’invitation</button></div>
           : <>
-            <div className="conversation-heading"><h2>{room.name}</h2><p>{encrypted ? 'Chiffrement du salon activé' : 'Chiffrement non confirmé — envoi bloqué'}</p></div>
-            <p className="security-note">Appareils non vérifiés entre participants. Utilisez uniquement des données de démonstration.</p>
-            <div className="messages" role="log" aria-label="Messages">
+            <div className="conversation-heading"><span className="avatar">{room.name.slice(0, 2).toUpperCase()}</span><div><h2>{room.name}</h2><p>{room.getJoinedMemberCount()} participant(s) <span>·</span> {encrypted ? 'Salon chiffré' : 'Envoi bloqué'}</p></div><button className={`icon-button ${details ? 'is-active' : ''}`} onClick={() => setDetails(!details)} aria-label="Informations de la conversation" aria-expanded={details} title="Informations de la conversation"><Icon name="info" /></button></div>
+            <p className="security-note conversation-notice"><Icon name="lock" size={14} /><span>{encrypted ? 'Chiffrement activé.' : 'Chiffrement non confirmé : envoi bloqué.'} Appareils non vérifiés · données fictives uniquement.</span></p>
+            <div className="messages" ref={messagesRef} role="log" aria-label="Messages">
+              <div className="timeline-start"><span>Messages de la conversation</span></div>
               {!events.length && <p className="empty-list">Aucun message dans cette conversation.</p>}
               {events.map((event) => {
                 const body = event.getContent().body;
-                const readable = event.isEncrypted() && event.getType() === EventType.RoomMessage && typeof body === 'string';
+                const readable = event.isEncrypted() && !event.isDecryptionFailure() && event.getType() === EventType.RoomMessage && typeof body === 'string';
                 return <article className={`message ${event.getSender() === connection.userId ? 'mine' : ''}`} key={event.getId() ?? event.getTxnId()}>
-                  <strong>{event.getSender()}</strong>
-                  <p>{readable ? body : 'Message chiffré indisponible ou en cours de déchiffrement.'}</p>
-                  {readable && event.getContent().msgtype === 'm.file' && event.getContent().file && <button className="secondary" disabled={!!downloading} onClick={() => void download(event)}>{downloading === event.getId() ? 'Déchiffrement…' : 'Télécharger et déchiffrer'}</button>}
-                  <small>{new Date(event.getTs()).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}{event.status ? ` · ${event.status}` : ''}</small>
+                  <strong title={event.getSender() ?? ''}>{event.getSender() === connection.userId ? 'Vous' : room.getMember(event.getSender() ?? '')?.name || event.getSender()}</strong>
+                  {readable && event.getContent().msgtype === 'm.file' ? <div className="file-message"><span className="file-symbol"><Icon name="file" size={24} /></span><div><p>{body}</p><small>Pièce jointe chiffrée</small></div></div> : <p>{readable ? body : event.isDecryptionFailure() ? 'Ce message ne peut pas être déchiffré sur cet appareil. Ses clés ne sont pas disponibles.' : 'Déchiffrement du message en cours…'}</p>}
+                  {readable && event.getContent().msgtype === 'm.file' && event.getContent().file && <button className="file-download" disabled={!!downloading} onClick={() => void download(event)}>{downloading === event.getId() ? 'Déchiffrement…' : 'Télécharger et déchiffrer'} <Icon name="arrow" size={15} /></button>}
+                  <small className="message-time">{new Date(event.getTs()).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}{event.status ? ` · ${{ encrypting: 'Chiffrement…', sending: 'Envoi…', queued: 'En attente', not_sent: 'Non envoyé', sent: 'Envoyé', cancelled: 'Annulé' }[event.status] || 'En cours'}` : ''}</small>
                 </article>;
               })}
             </div>
-            <form className="composer" onSubmit={(event) => void send(event)}>
-              <label htmlFor="message">Message</label><textarea id="message" maxLength={8000} rows={3} required value={text} onChange={(event) => setText(event.target.value)} disabled={working || !encrypted || !synced} />
-              <button disabled={working || !encrypted || !synced || !text.trim()}>{working ? 'Envoi…' : 'Envoyer'}</button>
-            </form>
-            <div className="attachment"><label htmlFor="attachment">Pièce jointe · 5 Mo maximum</label>
-              <input id="attachment" type="file" disabled={working || !encrypted || !synced} onChange={(event) => {
+            <div className="compose-area"><form className="composer" onSubmit={(event) => void send(event)}>
+              <label className="sr-only" htmlFor="message">Message</label><textarea id="message" placeholder="Écrivez votre message…" maxLength={8000} rows={2} required value={text} onChange={(event) => setText(event.target.value)} disabled={working || !encrypted || !synced} />
+              <div className="composer-tools"><div className="attachment-picker"><label htmlFor="attachment" title="Joindre un fichier · 5 Mo maximum"><Icon name="clip" /><span>Joindre</span></label>
+              <input id="attachment" aria-label="Pièce jointe · 5 Mo maximum" type="file" disabled={working || !encrypted || !synced} onChange={(event) => {
                 const chosen = event.target.files?.[0] ?? null; event.target.value = '';
                 if (chosen && chosen.size > MAX_FILE_SIZE) { setProblem('Fichier limité à 5 Mo.'); setFile(null); }
                 else { setFile(chosen); setProblem(''); }
               }} />
-              {file && <p>{file.name} · {Math.ceil(file.size / 1024)} Ko</p>}
-              <button className="secondary" disabled={!file || working || !encrypted || !synced} onClick={() => void attach()}>{working ? 'Envoi…' : 'Chiffrer et envoyer le fichier'}</button>
+              </div><span className="compose-limit">5 Mo maximum</span><button disabled={working || !encrypted || !synced || !text.trim()}>{working ? 'Envoi…' : 'Envoyer'}<Icon name="arrow" size={17} /></button></div>
+            </form>
+              {file && <div className="selected-file"><Icon name="file" /><span>{file.name}<small>{Math.ceil(file.size / 1024)} Ko</small></span><button className="icon-button" aria-label="Retirer la pièce jointe" disabled={working} onClick={() => setFile(null)}><Icon name="close" size={16} /></button><button className="secondary" disabled={working || !encrypted || !synced} onClick={() => void attach()}>{working ? 'Envoi…' : 'Chiffrer et envoyer le fichier'}</button></div>}
+              <p className="compose-caption"><Icon name="lock" size={12} />{encrypted ? 'Chiffré sur votre appareil avant l’envoi.' : 'Envoi indisponible : chiffrement non confirmé.'}</p>
             </div>
           </>}
       </section>
+      {details && room && !newRoom && <aside className="conversation-details" aria-label="Informations de la conversation"><div className="details-title"><h2>La conversation</h2><button className="icon-button" onClick={() => setDetails(false)} aria-label="Fermer les informations"><Icon name="close" size={18} /></button></div><span className="avatar detail-avatar">{room.name.slice(0, 2).toUpperCase()}</span><h3>{room.name}</h3><p className="details-subtitle">{room.getJoinedMemberCount()} participant(s)</p><div className="detail-security"><Icon name="lock" size={18} /><strong>{encrypted ? 'Chiffrement activé' : 'Chiffrement non confirmé'}</strong><p>Les appareils des participants ne sont pas encore vérifiés.</p></div><h4><Icon name="users" size={17} /> Participants</h4><div className="member-list">{room.getJoinedMembers().map((member) => <div className="member" key={member.userId}><span className="avatar small">{member.name.slice(0, 2).toUpperCase()}</span><div><strong>{member.userId === connection.userId ? `${member.name} (vous)` : member.name}</strong><small>{member.userId}</small></div></div>)}</div><p className="details-footnote">Le serveur connaît le nom du groupe et la liste des membres. Évitez les informations confidentielles dans le nom.</p></aside>}
     </main>}
+    </div>
   </div>;
 }

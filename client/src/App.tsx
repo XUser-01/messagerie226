@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { endInvalidSession, loginAgent, logoutAgent, restoreSession, type Connection } from './matrix';
 import { ClientEvent } from 'matrix-js-sdk';
 import { Workspace } from './Workspace';
+import { Icon } from './Icon';
 
 type ServerState =
   | { phase: 'checking' }
@@ -116,18 +117,19 @@ export function App() {
 
   return (
     <div className="page">
-      <header><a className="brand" href="/">M<span>226</span></a><span>Prototype · comptes fictifs uniquement</span></header>
+      <header><a className="brand" href="/">M<span>226</span><small>MESSAGERIE SOUVERAINE</small></a><span className="prototype-tag">Démonstration · Burkina Faso</span></header>
       <main>
         <section className="intro">
-          <p className="eyebrow">MESSAGERIE DE L’ADMINISTRATION</p>
-          <h1>Un espace commun.<br />Une infrastructure maîtrisée.</h1>
-          <p className="lead">Préparation d’une messagerie pour les échanges entre agents, hébergée sur une infrastructure contrôlée.</p>
-          <div className="milestone"><span>01</span><div><strong>Le serveur est en place</strong><p>Nous vérifions maintenant sa connexion avec votre navigateur.</p></div></div>
+          <p className="eyebrow">UN LIEN ENTRE LES AGENTS</p>
+          <h1>Vos échanges.<br />Votre équipe.<br /><em>Votre espace.</em></h1>
+          <p className="lead">Un espace commun pour les conversations et les documents de votre équipe, sur une infrastructure auto-hébergée.</p>
+          <div className="login-features"><div><Icon name="chat" /><span>Discussions et groupes</span></div><div><Icon name="lock" /><span>Messages et fichiers chiffrés</span></div><div><Icon name="users" /><span>Accès réservés aux agents enrôlés</span></div></div>
+          <p className="intro-note">Conçu pour travailler ensemble.<br />Prototype indépendant · données fictives uniquement.</p>
         </section>
         <section className="card" aria-labelledby="connection-title">
-          <p className="eyebrow">CONNEXION AU SERVICE</p>
-          <h2 id="connection-title">Messagerie souveraine</h2>
-          <p>Connectez-vous avec votre compte agent préalablement enrôlé.</p>
+          <span className="feature-icon"><Icon name="shield" size={25} /></span><p className="eyebrow">VOTRE ESPACE DE TRAVAIL</p>
+          <h2 id="connection-title">Bienvenue.</h2>
+          <p>Connectez-vous avec votre compte agent pour retrouver vos échanges.</p>
           <div className={`status ${server.phase}`} role="status" aria-live="polite">
             <span className="dot" aria-hidden="true" />
             <div><strong>{server.phase === 'ready' ? 'Serveur Matrix accessible' : server.phase === 'checking' ? 'Vérification en cours…' : 'Serveur inaccessible'}</strong>
@@ -141,7 +143,7 @@ export function App() {
             <input id="agent" autoComplete="username" placeholder="Ex. agent.a" required value={username} onChange={(event) => setUsername(event.target.value)} disabled={busy} />
             <label htmlFor="password">Mot de passe</label>
             <input id="password" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} disabled={busy} />
-            <button disabled={busy || server.phase !== 'ready' || retrySeconds > 0}>{busy ? 'Préparation de la session…' : retrySeconds ? `Réessayer dans ${retrySeconds} s` : 'Se connecter'}</button>
+            <button disabled={busy || server.phase !== 'ready' || retrySeconds > 0}>{busy ? 'Préparation de la session…' : retrySeconds ? `Réessayer dans ${retrySeconds} s` : 'Se connecter'}<Icon name="arrow" size={18} /></button>
           </form>
           <div className="notice"><strong>Démonstration · données fictives</strong><p>Connexion par mot de passe. Double authentification et récupération des clés non encore configurées.</p></div>
         </section>
