@@ -104,6 +104,23 @@ messages, groupes et fichiers ; 16–22 h : enrôlement et révocation ;
 22–26 h : scénarios de sécurité ; 26–30 h : stabilisation et démonstration.
 P1 uniquement après P0 vérifié ; aucune tâche P2 engagée.
 
+
 ## Équipe
 
-À compléter par les participants. Nom du produit provisoire.
+### OUEDRAOGO Emmanuel Seguerim
+- Architecture générale
+- Intégration Matrix / Synapse
+- Client React et UI/UX
+- Docker et déploiement
+- Intégration E2EE
+- Messagerie, groupes et fichiers
+- Documentation générale et démonstration
+
+### Moumouni Sana
+- Sécurité et contrôle d'accès
+- Enrôlement des agents
+- Gestion des rôles
+- Révocation des utilisateurs
+- Tests de sécurité
+- Documentation sécurité
+
