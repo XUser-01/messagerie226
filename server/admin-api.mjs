@@ -5,7 +5,7 @@ import { AGENTS, fullId, roleFor, revocable } from './admin-policy.mjs';
 const base = process.env.MATRIX_BASE_URL || 'http://127.0.0.1:8008';
 const bot = JSON.parse(readFileSync(process.env.ADMIN_SESSION_FILE || new URL('./runtime/control-service.json', import.meta.url)));
 if (!bot.accessToken) throw new Error('Exécuter node server/admin-bootstrap.mjs avant le service.');
-const allowedOrigins = new Set(['http://127.0.0.1:5173', 'http://localhost:5173', 'http://127.0.0.1:8080', 'http://localhost:8080']);
+const allowedOrigins = new Set(['http://127.0.0.1:5173', 'http://localhost:5173', 'http://127.0.0.1:8088', 'http://localhost:8088']);
 
 class HttpError extends Error { constructor(status, message) { super(message); this.status = status; } }
 async function matrix(path, token, method = 'GET', body) {

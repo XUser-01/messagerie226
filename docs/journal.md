@@ -164,3 +164,35 @@ Les limites Synapse ont été conservées ; le formulaire affiche le délai serv
 Tests supplémentaires HTTP : origine étrangère 403, corps trop grand 413,
 chemins privés via Vite 403. check-repository.mjs ne détecte aucun secret local
 dans les sources. Compilation et trois tests client réussis.
+
+## Étape 13 — scénario navigateur de révocation
+
+Scénario réel exécuté le 31 octobre : A, B et agent.test ont rejoint un groupe
+à trois membres. agent.test a déchiffré le message fictif avant révocation.
+Le gestionnaire a révoqué agent.test depuis l'interface. Retour au formulaire
+avec alerte de session invalidée observé en 725 ms dans ce test navigateur.
+Le panneau confirme Révoqué ; A/B restent actifs. Ce résultat ponctuel ne prouve
+pas une borne absolue ni le traitement de toutes les requêtes déjà en cours.
+
+Le test a également révélé un compteur de membres non rafraîchi. Abonnement
+ajouté à RoomStateEvent.Members et RoomEvent.Name ; compilation réussie et
+état du groupe à trois membres confirmé après reprise de session.
+
+## Étape 14 — livraison Docker et reprise du 1 novembre
+
+Dockerfiles du client et du backend, Nginx 1.30.6 (image officielle vérifiée),
+routage Matrix/API, secret réservé au backend et contrôles de santé préparés.
+Compose validé. Lancement des nouveaux conteneurs encore à confirmer par
+l'utilisateur, car le moteur Docker refuse l'accès au compte d'exécution agent.
+
+Le port 8080 répond avec un serveur Apache d'un autre logiciel ; déplacement
+du port hôte du client vers 8088, sans toucher à cet autre logiciel. Origines
+autorisées et test de déploiement alignés. Synapse HTTP 200. Développement
+relancé : Vite sur 5173 et administration sur 3001. Contrôle de 48 fichiers de
+source sans secret détecté et six tests Python réussis. Tests Docker web réels
+sur 8088 et revue finale navigateur attendent le lancement utilisateur.
+
+Reprise après saturation du disque : environ 4,7 Go disponibles. Compilation
+de production réussie (TypeScript puis Vite), trois tests de pièces jointes
+et six tests Python réussis. Contrôle des sources : aucun secret local détecté.
+Le lancement Docker complet reste distinct de ces validations de code.

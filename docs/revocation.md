@@ -42,7 +42,7 @@ une suppression à distance des données. Aucune garantie d'instantanéité abso
 Vite transmet /api à ce service. Les requêtes cross-origin sont refusées et le
 jeton Bearer est obligatoire. Les secrets sont refusés en HTTP 403 par Vite.
 Le conteneur administration_api est uniquement sur des réseaux internes ; le
-client Docker expose son interface sur 127.0.0.1:8080.
+client Docker expose son interface sur 127.0.0.1:8088.
 
 `node server/check-revocation.mjs` teste de vraies requêtes : 401 sans jeton ou
 jeton invalide ; 403 pour un agent et un rôle falsifié ; comptes protégés refusés.

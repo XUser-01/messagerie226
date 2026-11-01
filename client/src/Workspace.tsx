@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useState } from 'react';
-import { ClientEvent, EventType, MatrixEventEvent, Preset, RoomEvent, SyncState, Visibility } from 'matrix-js-sdk';
+import { ClientEvent, EventType, MatrixEventEvent, Preset, RoomEvent, RoomStateEvent, SyncState, Visibility } from 'matrix-js-sdk';
 import type { Connection } from './matrix';
 import { downloadEncryptedFile, MAX_FILE_SIZE, sendEncryptedFile } from './attachments';
 import { AdminPanel } from './AdminPanel';
@@ -39,6 +39,8 @@ export function Workspace({ connection, onLogout, busy, error }: {
     client.on(ClientEvent.Room, refresh);
     client.on(RoomEvent.Timeline, refresh);
     client.on(RoomEvent.MyMembership, refresh);
+    client.on(RoomStateEvent.Members, refresh);
+    client.on(RoomEvent.Name, refresh);
     client.on(MatrixEventEvent.Decrypted, refresh);
     client.on(RoomEvent.LocalEchoUpdated, refresh);
     return () => {
@@ -46,6 +48,8 @@ export function Workspace({ connection, onLogout, busy, error }: {
       client.removeListener(ClientEvent.Room, refresh);
       client.removeListener(RoomEvent.Timeline, refresh);
       client.removeListener(RoomEvent.MyMembership, refresh);
+      client.removeListener(RoomStateEvent.Members, refresh);
+      client.removeListener(RoomEvent.Name, refresh);
       client.removeListener(MatrixEventEvent.Decrypted, refresh);
       client.removeListener(RoomEvent.LocalEchoUpdated, refresh);
     };

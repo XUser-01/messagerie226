@@ -4,14 +4,16 @@ Messagerie auto-hébergée pour des agents fictifs de l'administration burkinab�
 Objectif : conversations privées, groupes et fichiers chiffrés, enrôlement contrôlé
 et révocation. Aucun agrément officiel ni valeur juridique revendiqués.
 
-**État : serveur validé le 31 octobre 2026 dans la session utilisateur : PostgreSQL
-et Synapse healthy, API Matrix `/versions` accessible. Chiffrement et révocation
-non encore validés. Client en construction.**
+**État au 1 novembre 2026 : serveur, login, texte E2EE, groupe et fichier chiffré
+testés localement. Révocation validée par API et dans le navigateur. Client et service d'administration
+Docker préparés ; leur démarrage en conteneurs reste à confirmer. Prototype,
+sans authentification forte ni récupération des clés, à ne pas utiliser en réel.**
 
 ## Architecture
 
 Navigateur React → API Matrix Synapse → PostgreSQL et stockage local des médias.
-Le navigateur devra chiffrer avant l'envoi avec matrix-js-sdk / Rust Crypto.
+Le navigateur chiffre avant l'envoi avec matrix-js-sdk / Rust Crypto. Le service
+d'administration Node vérifie les rôles et conserve ses droits Synapse côté serveur.
 Voir [les choix et limites](docs/architecture.md).
 
 ## Technologies open source
@@ -20,60 +22,74 @@ Voir [les choix et limites](docs/architecture.md).
 |---|---|---|
 | Synapse 1.164.1 | Serveur Matrix | [AGPL-3.0](https://github.com/element-hq/synapse/blob/develop/LICENSE-AGPL-3.0) |
 | PostgreSQL 17 | Base de données | [PostgreSQL License](https://www.postgresql.org/about/licence/) |
-| React (prévu) | Client personnalisé | [MIT](https://github.com/facebook/react/blob/main/LICENSE) |
+| React 19.3.1 | Client personnalisé | [MIT](https://github.com/facebook/react/blob/main/LICENSE) |
 | matrix-js-sdk 45.0.0 | API Matrix et intégration crypto | [Apache-2.0](https://github.com/matrix-org/matrix-js-sdk/blob/develop/LICENSE) |
-| Matrix Rust SDK (prévu) | Moteur E2EE | [Apache-2.0](https://github.com/matrix-org/matrix-rust-sdk/blob/main/LICENSE) |
+| Matrix Rust Crypto (WASM 18.9.0) | Moteur E2EE | [Apache-2.0](https://github.com/matrix-org/matrix-rust-sdk/blob/main/LICENSE) |
+| matrix-encrypt-attachment 1.0.3 | Pièces jointes chiffrées côté client | [Apache-2.0](https://github.com/matrix-org/matrix-encrypt-attachment/blob/master/LICENSE) |
 | Docker Engine / Compose | Conteneurs sur Linux | [Apache-2.0 Engine](https://github.com/moby/moby/blob/master/LICENSE), [Compose](https://github.com/docker/compose/blob/main/LICENSE) |
+| Node.js 24 | Outils et service d'administration | [MIT et licences des composants](https://github.com/nodejs/node/blob/main/LICENSE) |
+| Nginx 1.30.6 | Client web et routage des API | [BSD à deux clauses](https://nginx.org/LICENSE) |
 
 Notre code : MIT, voir LICENSE. Ces licences ne remplacent pas celles des dépendances.
 Docker Desktop est un outil de développement Windows distinct, soumis à ses propres
 conditions ; il n'est pas une dépendance du déploiement Linux final.
 
-## Installation locale prévue
+## Installation locale
 
 Prérequis : Node.js 24, Docker avec Compose et conteneurs Linux.
 Depuis ce dossier :
 
 ```powershell
 node docker/prepare.mjs
-docker compose config --quiet
-docker compose up -d
-docker compose ps
-Invoke-RestMethod http://localhost:8008/_matrix/client/versions
+docker compose up -d --wait --wait-timeout 120 synapse
+node server/admin-bootstrap.mjs
+docker compose up -d --build --wait --wait-timeout 180
 ```
 
-La préparation crée `.env` et `docker/runtime/homeserver.yaml`, jamais versionnés.
+Ouvrir http://127.0.0.1:8088. La première préparation crée `.env` et
+`docker/runtime/homeserver.yaml`, jamais versionnés.
 Elle refuse d'écraser une configuration existante. Ne pas copier manuellement
-`.env.example` avant cette commande. Les services doivent être sains et l'API doit
-retourner `versions`. Cela prouve la disponibilité, pas le chiffrement.
+`.env.example` avant cette commande. Pour ce projet déjà préparé, exécuter
+seulement la dernière commande. Voir [déploiement et reprise](docs/deployment.md).
 
 Pour arrêter sans effacer les données : `docker compose down`.
 Ne pas utiliser `down -v` : cela détruirait les volumes.
 
-### Premier écran web
+### Développement hors conteneur du client
 
-Depuis `client/` : `npm ci`, `npm run build`, puis `npm run dev`.
-Ouvrir http://127.0.0.1:5173 pour vérifier la connexion du navigateur à Synapse.
-Le formulaire permet la connexion des agents et initialise Rust Crypto.
-L'envoi de messages reste à intégrer et à vérifier.
+Depuis la racine : `node server/admin-api.mjs`. Dans un autre terminal, depuis
+`client/` : `npm ci`, `npm run build`, puis `npm run dev`.
+Ouvrir http://127.0.0.1:5173.
+Le formulaire connecte les agents et initialise Rust Crypto. Discussions privées,
+groupes nommés, invitations, texte et pièces jointes chiffrées sont disponibles.
+Tests client : `npm test`. Utiliser uniquement des données fictives.
 
 ## Comptes de démonstration
 
-`node server/enroll-demo.mjs` crée les comptes fictifs `agent.a` et `agent.b`,
-sans droits administrateur. Leurs mots de passe aléatoires restent dans
+`node server/admin-bootstrap.mjs` prépare `agent.a`, `agent.b`, `agent.test` et
+`gestionnaire.demo` (gestionnaire de l'application, compte Matrix ordinaire).
+`service.admin` est technique, réservé au backend. Les mots de passe de démonstration restent dans
 `server/runtime/demo-accounts.json`, exclu de Git. Ne pas publier ce fichier.
 Inscription publique interdite. Voir [authentification et limites](docs/authentication.md).
-Tests serveur : `node server/check-enrollment.mjs`.
+Tests serveur : `node server/check-enrollment.mjs`, `node server/check-message-policy.mjs`,
+`node server/check-encrypted-events.mjs`, `node server/check-revocation.mjs`.
+Les limites Synapse peuvent imposer plusieurs minutes entre les tests de login.
 
 ## Sécurité et limites
 
 Configuration limitée à ce PC, HTTP local uniquement. HTTPS obligatoire avant
 accès depuis un autre appareil. Aucun message réel ni donnée personnelle.
-E2EE, authentification forte, contrôle des événements en clair, fichiers chiffrés,
-révocation et sauvegarde des clés **non encore implémentés ou validés**.
+Messages en clair refusés par un module Synapse ; échanges E2EE et pièce jointe
+testés dans deux clients. La révocation invalide les jetons ; la fermeture de
+l'écran connecté est détectée par sync ou contrôle toutes les cinq secondes.
+MFA, vérification mutuelle des appareils, récupération des clés et déploiement
+sur un réseau réel ne sont pas encore validés. Le stockage navigateur demeure
+exposé à une compromission de l'appareil ou du code de la même origine.
 Le serveur connaît certaines métadonnées. Révoquer ne peut pas effacer une copie
 déjà reçue. Pas de service tiers obligatoire prévu à l'exécution ; les images
 et dépendances nécessitent un téléchargement initial.
+Voir [politique de messages](docs/message-policy.md), [fichiers](docs/attachments.md)
+et [révocation](docs/revocation.md). Aucune fonction P1 engagée avant validation P0.
 
 ## Sprint de 30 heures — budget cible, pas garantie
 

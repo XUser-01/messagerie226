@@ -49,7 +49,44 @@ services:
       retries: 20
       start_period: 30s
     networks: [matrix, client_access]
+  administration_api:
+    build: ./server
+    restart: unless-stopped
+    depends_on:
+      synapse:
+        condition: service_healthy
+    environment:
+      MATRIX_BASE_URL: http://synapse:8008
+      ADMIN_SESSION_FILE: /run/secrets/control-service.json
+      HOST: 0.0.0.0
+    secrets:
+      - source: admin_session
+        target: control-service.json
+    healthcheck:
+      test: [CMD, node, -e, 'fetch("http://127.0.0.1:3001/health").then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks: [matrix, administration]
+  web:
+    build: ./client
+    restart: unless-stopped
+    depends_on:
+      synapse:
+        condition: service_healthy
+      administration_api:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:8088:8080'
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, 'http://127.0.0.1:8080/health']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks: [client_access, administration]
 networks:
+  administration:
+    internal: true
   client_access:
     driver: bridge
   matrix:
@@ -57,3 +94,6 @@ networks:
 volumes:
   postgres_data:
   synapse_data:
+secrets:
+  admin_session:
+    file: ./server/runtime/control-service.json
