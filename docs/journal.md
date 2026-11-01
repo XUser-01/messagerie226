@@ -202,3 +202,11 @@ malgré une étape npm déclarée réussie. Cause non déterminée avec ce journ
 Dockerfile renforcé : dépendances de développement explicites, présence des
 outils et du HTML compilé contrôlée. Reconstruction sans cache et journal
 complet demandés ; aucun conteneur web déclaré validé à ce stade.
+
+Construction web réussie avec le builder dédié messagerie226-build, créé
+avec le pilote docker-container et default-load=true. Le journal utilisateur
+confirme Node 24.22.2/npm 11.19.1, installation des 40 dépendances, compilation
+des 275 modules et import de messagerie226-web dans Docker. Le moteur intégré
+présentait des exécutions Node/npm sans effet ; cause interne non établie.
+Le port 8088 ne répond pas encore : construction administration puis lancement
+sans reconstruction et test HTTP restent nécessaires.

@@ -38,6 +38,25 @@ Ne pas partager .env, les configurations runtime ou les identités techniques.
 Après lancement : `node server/check-deployment.mjs` vérifie la page, les proxies,
 la politique de chargement du navigateur et l'absence d'accès aux chemins privés.
 
+## Construction avec moteur séparé sur ce poste
+
+Le moteur intégré a exécuté Node/npm sans sortie ni dépendances installées.
+La construction web a réussi le 1 novembre avec un moteur séparé ; la cause
+interne du comportement du moteur intégré n'est pas établie.
+
+```powershell
+# Création une seule fois (déjà faite sur ce poste)
+docker buildx create --name messagerie226-build --driver docker-container --driver-opt default-load=true
+docker compose --progress plain build --builder messagerie226-build web administration_api
+docker compose up -d --no-build --wait --wait-timeout 180
+node server/check-deployment.mjs
+```
+
+Le moteur séparé possède son propre cache ; il conserve les volumes Matrix.
+L'image web a été construite et importée, mais son démarrage et les contrôles
+HTTP doivent encore être confirmés. Le service d'administration doit aussi
+être construit avant le lancement avec --no-build.
+
 ## Origines navigateur et clés
 
 127.0.0.1:5173 (développement), 127.0.0.1:8088 (Docker) et localhost sont des
