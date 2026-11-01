@@ -194,6 +194,7 @@ svg { flex: none; vertical-align: middle; }
  .mobile-conversation .conversation { display: flex; flex: 1; }
  .mobile-conversation .navigation-rail { display: none; }
  .mobile-back { width: 100%; display: flex; align-items: center; gap: 8px; background: white; color: var(--green); font-size: 11px; border-radius: 0; padding: 12px 17px; border-bottom: 1px solid var(--line); flex: none; }
+ .mobile-back:hover { background: #edf3e9; }
  .conversation-heading { height: 74px; padding: 12px 17px; gap: 10px; }
  .conversation-heading h2 { font-size: 14px; }
  .conversation-heading .avatar { width: 37px; height: 37px; border-radius: 12px; }
