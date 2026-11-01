@@ -210,3 +210,20 @@ des 275 modules et import de messagerie226-web dans Docker. Le moteur intégré
 présentait des exécutions Node/npm sans effet ; cause interne non établie.
 Le port 8088 ne répond pas encore : construction administration puis lancement
 sans reconstruction et test HTTP restent nécessaires.
+
+## Étape 15 — validation Docker complète sur 8088
+
+Le journal utilisateur confirme les quatre services healthy (PostgreSQL,
+Synapse, administration_api, web) et le service d'initialisation terminé.
+check-deployment.mjs relancé indépendamment : page/santé, proxy Matrix,
+API sans jeton 401 et chemins privés 404 validés.
+
+Test navigateur réel sur 8088 : connexion agent.a et agent.b, nouveau groupe
+Validation Docker 8088, invitation acceptée, compteur à deux participants.
+Texte envoyé et déchiffré dans les deux sens. Fichier fictif chiffré envoyé par A,
+téléchargé et déchiffré chez B : comparaison exacte des 100 octets réussie.
+Après rechargement de B, session restaurée et deux messages toujours lisibles.
+Connexion gestionnaire et liste des statuts via API Docker réussies : A/B actifs,
+agent.test révoqué. Aucune nouvelle révocation effectuée dans ce dernier scénario.
+Captures de preuve enregistrées dans outputs hors dépôt. Les limites MFA,
+vérification d'appareils, récupération des clés et HTTPS distant restent ouvertes.

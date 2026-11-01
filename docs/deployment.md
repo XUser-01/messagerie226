@@ -28,9 +28,10 @@ Le frontend ne monte aucun dossier de secrets, uniquement son build.
 
 Ne pas relancer prepare.mjs : les secrets sont déjà créés. La migration de
 politique a été appliquée localement. admin-bootstrap.mjs a aussi été exécuté.
-Appliquer `docker compose up -d --build --wait --wait-timeout 180` pour ajouter
-les conteneurs web et administration. Leur lancement complet reste à vérifier
-dans la session utilisateur possédant Docker ; la syntaxe Compose est validée.
+Les conteneurs web et administration ont été construits avec le moteur séparé
+ci-dessous. Les quatre services sont sains et les contrôles HTTP passent.
+Appliquer `docker compose up -d --no-build --wait --wait-timeout 180` pour
+redémarrer les images existantes depuis la session utilisateur possédant Docker.
 
 En cas d'échec : `docker compose ps`, puis
 `docker compose logs --tail 60 web administration_api synapse`.
@@ -53,9 +54,12 @@ node server/check-deployment.mjs
 ```
 
 Le moteur séparé possède son propre cache ; il conserve les volumes Matrix.
-L'image web a été construite et importée, mais son démarrage et les contrôles
-HTTP doivent encore être confirmés. Le service d'administration doit aussi
-être construit avant le lancement avec --no-build.
+Les deux images ont été construites et importées, les services sont sains et
+check-deployment.mjs passe. Sur 8088 : connexion A/B, groupe et invitation,
+messages dans les deux sens, fichier déchiffré identique (100 octets), reprise
+après rechargement et panneau du gestionnaire vérifiés dans le navigateur.
+La révocation effective avait été testée sur l'origine de développement ;
+sur 8088, le panneau a confirmé le statut révoqué existant, sans nouvelle révocation.
 
 ## Origines navigateur et clés
 

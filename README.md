@@ -5,8 +5,9 @@ Objectif : conversations privées, groupes et fichiers chiffrés, enrôlement co
 et révocation. Aucun agrément officiel ni valeur juridique revendiqués.
 
 **État au 1 novembre 2026 : serveur, login, texte E2EE, groupe et fichier chiffré
-testés localement. Révocation validée par API et dans le navigateur. Client et service d'administration
-Docker préparés ; leur démarrage en conteneurs reste à confirmer. Prototype,
+testés localement. Révocation validée par API et dans le navigateur. Les quatre
+services Docker sont sains ; connexion, échanges E2EE, fichier et reprise de
+session vérifiés sur http://127.0.0.1:8088. Prototype,
 sans authentification forte ni récupération des clés, à ne pas utiliser en réel.**
 
 ## Architecture
@@ -51,6 +52,11 @@ Ouvrir http://127.0.0.1:8088. La première préparation crée `.env` et
 Elle refuse d'écraser une configuration existante. Ne pas copier manuellement
 `.env.example` avant cette commande. Pour ce projet déjà préparé, exécuter
 seulement la dernière commande. Voir [déploiement et reprise](docs/deployment.md).
+
+Sur ce poste, utiliser le moteur séparé déjà créé pour reconstruire :
+`docker compose build --builder messagerie226-build web administration_api`,
+puis `docker compose up -d --no-build --wait --wait-timeout 180`.
+Pour démarrer les images existantes, seule cette dernière commande est requise.
 
 Pour arrêter sans effacer les données : `docker compose down`.
 Ne pas utiliser `down -v` : cela détruirait les volumes.
